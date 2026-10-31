@@ -90,3 +90,12 @@
 @utility page-enter { animation: page-in 260ms ease-out both; }
 @media (prefers-reduced-motion: reduce) { .page-enter { animation: none; } }
 html, body { overflow-x: clip; }
+
+/*
+ * Safety net against a frozen page. While a window (dialog, side panel, menu) is open the library switches off clicks on the
+ * page behind it and switches them back on when the window is gone. If that ever fails to happen, the whole page would stop
+ * answering. With no window in the page there is nothing to protect: clicks are always on.
+ */
+html body:not(:has([role="dialog"], [role="alertdialog"], [role="listbox"], [role="menu"], [data-radix-popper-content-wrapper])) {
+  pointer-events: auto !important;
+}

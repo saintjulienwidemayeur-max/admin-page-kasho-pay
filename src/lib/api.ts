@@ -103,7 +103,7 @@ export type FeeRule = {
 // Needs the current password (and the 2FA code): ask for it with useStepUp().ask(...).
 export const changePassword = (a: Arg<{ currentPassword: string; newPassword: string }>) => call<{ ok: boolean }>("changePassword", a.data);
 
-// ---------------------------------------------------------------- admin panel (see backend src/admin.ts)
+// ---------------------------------------------------------------- admin site (see backend src/admin.ts)
 export type AdminRole = "super" | "admin";
 export type AdminStatus = { isAdmin: boolean; role: AdminRole | null; hasTotp: boolean; mfaOk: boolean; email: string };
 export const adminStatus = () => call<AdminStatus>("adminStatus", {});
@@ -113,27 +113,15 @@ export type FredaSnapshot = {
   configured: boolean; mode: "live" | "sandbox" | null; ok: boolean; message?: string; fetchedAt: string;
   master: MasterWallet | null; gateway: { htg: number | null; usd: number | null } | null;
 };
-export type PnlOperation = "deposit" | "withdrawal" | "card_creation" | "card_fund" | "card_withdraw" | "card_closure" | "transfer" | "master_wallet_funding" | "card_purchase" | "plans";
-export type PnlLine = { operation: PnlOperation; count: number; volume: number; revenue: number; partnerCost: number; profit: number; estimated: number };
-export type Pnl = {
-  lines: PnlLine[];
-  totals: { revenue: number; partnerCost: number; profit: number; margin: number | null };
-  daily: { date: string; revenue: number; partnerCost: number; profit: number }[];
-};
-export type GatewayPlan = "standard" | "pro" | "business";
-export type IssuingPlan = "startup" | "pro" | "premium";
 export type AdminOverview = {
   period: { from: string; to: string; days: number };
   freda: FredaSnapshot;
   stats: {
     usersTotal: number; usersNew: number; usersVerified: number; usersKycPending: number; walletsTotal: number; walletsFunded: number;
     cardsTotal: number; cardsActive: number; cardsBalance: number; txPending: number; txPendingOld: number; txFailed: number;
-    adjustCredits: number; adjustDebits: number; cardPurchases: number; cardEventsSince: string | null;
+    adjustCredits: number; adjustDebits: number; cardPurchases: number;
   };
-  pnl: Pnl;
   funds: { owedToUsers: number; heldAtFreda: number | null; coverage: number | null; rate: number };
-  plans: { gateway: GatewayPlan; issuing: IssuingPlan };
-  truncated: boolean;
 };
 export const adminOverview = (a: Arg<{ days: number }>) => call<AdminOverview>("adminOverview", a.data);
 export const adminFredaFunds = () => call<FredaSnapshot>("adminFredaFunds", {});
@@ -147,17 +135,6 @@ export type AdminFeeInput = {
 };
 export const adminSaveFee = (a: Arg<AdminFeeInput>) => call<AdminFeeRule>("adminSaveFee", a.data);
 export const adminDeleteFee = (a: Arg<{ id: string; confirmPassword: string }>) => call<{ ok: true }>("adminDeleteFee", a.data);
-
-export type PartnerOperation = "deposit" | "withdrawal" | "card_creation" | "card_fund" | "card_withdraw" | "card_closure" | "card_purchase" | "master_wallet_funding";
-export type PartnerRule = { operation: PartnerOperation; label: string; percent: number; flatUsd: number; flatHtg: number; thresholdUsd: number | null; active: boolean; note: string };
-export type FeeAnalysisRow = { operation: FeeOperation; amount: number; ourFee: number | null; partnerCost: number; margin: number | null };
-export type AdminPartnerCosts = {
-  plans: { gateway: GatewayPlan; issuing: IssuingPlan }; options: { gateway: GatewayPlan[]; issuing: IssuingPlan[] };
-  rules: PartnerRule[]; rate: number; monthlyPlanUsd: number; analysis: FeeAnalysisRow[];
-};
-export const adminPartnerCosts = () => call<AdminPartnerCosts>("adminPartnerCosts", {});
-export const adminSavePartnerCost = (a: Arg<Omit<PartnerRule, "label"> & { confirmPassword: string }>) => call<{ ok: true }>("adminSavePartnerCost", a.data);
-export const adminApplyPartnerPlan = (a: Arg<{ gateway: GatewayPlan; issuing: IssuingPlan; confirmPassword: string }>) => call<{ ok: true }>("adminApplyPartnerPlan", a.data);
 
 export type AdminUserRow = {
   id: string; email: string; name: string; username: string; kashoId: string | null; phone: string; kycStatus: string; balance: number; cards: number;
@@ -177,6 +154,24 @@ export const adminGetUser = (a: Arg<{ userId: string }>) => call<AdminUserDetail
 export const adminAdjustBalance = (a: Arg<{ userId: string; direction: "credit" | "debit"; amountUsd: number; note: string; confirmPassword: string }>) =>
   call<{ reference: string; balanceBefore: number; balanceAfter: number }>("adminAdjustBalance", a.data);
 export const adminSetUserBlocked = (a: Arg<{ userId: string; blocked: boolean; confirmPassword: string }>) => call<{ blocked: boolean }>("adminSetUserBlocked", a.data);
+
+// The state of a card in the database: "disabled" is a frozen card.
+export type CardStatus = "pending" | "active" | "disabled" | "failed" | "terminated";
+export type AdminCardRow = {
+  id: string; label: string; brand: string; status: string; last4: string; expiry: string; balance: number; hidden: boolean; createdAt: string;
+  userId: string; customer: string; kashoId: string | null;
+};
+export type AdminCardsSummary = { total: number; active: number; frozen: number; pending: number; failed: number; terminated: number; balance: number };
+export const adminListCards = (a: Arg<{ q?: string | undefined; status?: CardStatus | undefined; brand?: "VISA" | "MASTERCARD" | undefined; page: number; pageSize?: number | undefined }>) =>
+  call<{ total: number; page: number; pageSize: number; summary: AdminCardsSummary; truncated: boolean; items: AdminCardRow[] }>("adminListCards", a.data);
+export type AdminCardDetail = {
+  id: string; label: string; brand: string; color: string; status: string; last4: string; expiry: string; balance: number; hidden: boolean;
+  createdAt: string; updatedAt: string; reference: string; fredaCardId: string | null;
+  owner: { id: string; name: string; username: string; kashoId: string | null; kycStatus: string; email: string };
+  transactions: { id: string; reference: string; kind: string; title: string; amount: number; fee: number; status: string; createdAt: string; note: string | null }[];
+  purchases: { id: string; type: string; amount: number; createdAt: string }[];
+};
+export const adminGetCard = (a: Arg<{ cardId: string }>) => call<AdminCardDetail>("adminGetCard", a.data);
 
 export type AdminTxRow = AdminTx & { userId: string; customer: string; kashoId: string | null; providerRef: string | null };
 export const adminListTransactions = (a: Arg<{ q?: string | undefined; kind?: string | undefined; status?: "pending" | "completed" | "failed" | undefined; userId?: string | undefined; page: number; pageSize?: number | undefined }>) =>

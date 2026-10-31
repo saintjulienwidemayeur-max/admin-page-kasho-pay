@@ -20,6 +20,28 @@ test("every pattern is anchored and only uses the capture groups it has", () => 
   }
 });
 
+test("the Cards tab and the password field are translated", () => {
+  const tr = (t: string) => { const m = PATTERNS.map(([re, rep]) => { const x = re.exec(t); return x ? rep.replace(/\$(\d)/g, (_, n) => x[Number(n)] ?? "") : null; }).find(Boolean); return m ?? FR[t] ?? null; };
+  for (const en of ["Cards", "Cards issued", "Active cards", "Frozen cards", "Pending cards", "Money on cards", "All cards", "Search cards", "State", "Brand", "All states", "All brands", "No card found.", "Hidden by customer", "Active", "Frozen", "Terminated", "Open customer", "Owner", "Balance on the card", "Purchases reported by Freda", "Money moved to and from this card", "Your password", "Current password", "Enter your password.", "Wrong password. Try again.", "Enabled", "Disabled"]) assert.ok(FR[en], en);
+  assert.equal(tr("Open card Shopping"), "Ouvrir la carte Shopping");
+  assert.equal(tr("Open Jean Dupont"), "Ouvrir Jean Dupont");
+  assert.equal(tr("Fee $0.50"), "Frais $0.50");
+  assert.equal(tr("3 terminated · 1 failed"), "3 résiliées · 1 échouées");
+  // the audit log
+  assert.equal(tr("Card top-up: $2.30"), "Card top-up : $2.30");
+  assert.equal(tr("Wallet top-up: 1.5%"), "Wallet top-up : 1.5 %");
+  assert.equal(tr("$25.50 ($65.24 to $90.74)"), "$25.50 ($65.24 à $90.74)");
+});
+
+test("the titles written by the database for an adjustment are translated", () => {
+  for (const en of ["Added by Kasho Pay", "Removed by Kasho Pay", "Adjustment"]) assert.ok(FR[en], en);
+});
+
+test("no profit or margin text is left in the dictionary", () => {
+  const all = [...Object.keys(FR), ...PATTERNS.map(([re]) => re.source)].join("\n");
+  for (const word of ["Net profit", "Profit and loss", "Margin", "Freda's share", "Freda cost", "profit report", "price list"]) assert.ok(!all.includes(word), `dead text still translated: ${word}`);
+});
+
 test("the main screens are translated", () => {
   for (const en of ["Sign in", "Password", "Verify", "Sign out", "Overview", "Fees", "Customers", "Audit log", "My account", "Add money", "Remove money", "Suspend"]) assert.ok(FR[en], en);
   const tr = (t: string) => { const m = PATTERNS.map(([re, rep]) => { const x = re.exec(t); return x ? rep.replace(/\$(\d)/g, (_, n) => x[Number(n)] ?? "") : null; }).find(Boolean); return m ?? null; };

@@ -7,26 +7,28 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { changePassword, type AdminStatus } from "@/lib/api";
 import { errorMessage } from "@/lib/format";
-import { isCancelled, useStepUp } from "@/lib/stepup";
-import { Pill, Section, Stat } from "./shared";
+import { PasswordConfirm, Pill, Section, Stat, passwordError } from "./shared";
 
 export function AccountTab({ status }: { status: AdminStatus }) {
-  const stepUp = useStepUp();
+  const [current, setCurrent] = useState("");
+  const [currentError, setCurrentError] = useState("");
   const [next, setNext] = useState("");
   const [again, setAgain] = useState("");
   const [busy, setBusy] = useState(false);
   const tooShort = next.length > 0 && next.length < 8;
   const mismatch = again.length > 0 && next !== again;
-  const valid = next.length >= 8 && next === again;
+  const valid = current.length > 0 && next.length >= 8 && next === again;
 
   const submit = async () => {
     setBusy(true);
+    setCurrentError("");
     try {
-      await stepUp.ask((currentPassword) => changePassword({ data: { currentPassword, newPassword: next } }));
+      await changePassword({ data: { currentPassword: current, newPassword: next } });
       toast.success("Password changed. Your other devices are signed out.");
-      setNext(""); setAgain("");
+      setCurrent(""); setNext(""); setAgain("");
     } catch (e) {
-      if (!isCancelled(e)) toast.error(errorMessage(e));
+      const bad = passwordError(e);
+      if (bad) { setCurrent(""); setCurrentError(bad); } else toast.error(errorMessage(e));
     } finally { setBusy(false); }
   };
 
@@ -46,8 +48,9 @@ export function AccountTab({ status }: { status: AdminStatus }) {
         </div>
       </Section>
 
-      <Section title="Change your password" description="You are asked for your current password (and your 2FA code). Your other devices are signed out.">
-        <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); if (valid) void submit(); }}>
+      <Section title="Change your password" description="You are asked for your current password. Your other devices are signed out.">
+        <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); if (valid && !busy) void submit(); }}>
+          <PasswordConfirm id="ad-current" label="Current password" hint="Asked again to change your password." value={current} onChange={(v) => { setCurrent(v); setCurrentError(""); }} error={currentError} busy={busy} />
           <div className="space-y-2">
             <Label htmlFor="ad-new">New password</Label>
             <Input id="ad-new" type="password" autoComplete="new-password" className="h-11 rounded-xl" value={next} onChange={(e) => setNext(e.target.value)} />
@@ -61,7 +64,6 @@ export function AccountTab({ status }: { status: AdminStatus }) {
           </div>
           <Button type="submit" className="h-11 w-full rounded-xl" disabled={!valid || busy}><KeyRound className="h-4 w-4" /> Change password</Button>
         </form>
-        {stepUp.dialog}
       </Section>
     </div>
   );

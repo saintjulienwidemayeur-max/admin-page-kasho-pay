@@ -79,10 +79,10 @@ function translateText(text: string): string | null {
     const rest = d[3]!.replace(/\b(AM|PM)\b/g, (x) => x.toLowerCase() === "am" ? "AM" : "PM");
     return wrap(`${d[2]} ${MONTHS_FR[d[1]!]}${rest}`);
   }
-  // Strings like "Savings · Pending": translate each " · " part.
+  // Strings like "Top-up · Oct 31, 2026, 4:21 PM": translate each " · " part (a text, a pattern or a date).
   if (core.includes(" · ")) {
     const parts = core.split(" · ");
-    const out = parts.map((p) => FR[p] ?? p);
+    const out = parts.map((p) => translateText(p) ?? p);
     if (out.some((p, i) => p !== parts[i])) return wrap(out.join(" · "));
   }
   if (debug() && !missing.has(core) && /[a-z]{3}/.test(core) && !/^[\w.+-]+@[\w.-]+$/.test(core)) {

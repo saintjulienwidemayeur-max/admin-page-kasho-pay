@@ -78,7 +78,7 @@ export function TransactionsTab({ role }: { role: AdminRole }) {
           </>
         )
       )}
-      <UserSheet userId={user} role={role} onClose={() => setUser(null)} />
+      {user && <UserSheet key={user} userId={user} role={role} onClose={() => setUser(null)} />}
     </Section>
   );
 }

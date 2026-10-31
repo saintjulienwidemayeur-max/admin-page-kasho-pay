@@ -1,8 +1,8 @@
 // Admin > Support (disputes and messages from customers) and Audit (what administrators did).
 import { useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { adminListAudit, adminListSupport, type AdminRole, type FeeOperation, type PnlOperation } from "@/lib/api";
-import { Empty, ErrorBox, FEE_OPERATION_LABELS, Loading, OPERATION_LABELS, Pager, Pill, Section, money, when } from "./shared";
+import { adminListAudit, adminListSupport, type AdminRole, type FeeOperation } from "@/lib/api";
+import { Empty, ErrorBox, FEE_OPERATION_LABELS, Loading, Pager, Pill, Section, money, when } from "./shared";
 import { UserSheet } from "./users";
 
 export function SupportTab({ role }: { role: AdminRole }) {
@@ -41,7 +41,7 @@ export function SupportTab({ role }: { role: AdminRole }) {
           </ul>
         )}
       </Section>
-      <UserSheet userId={user} role={role} onClose={() => setUser(null)} />
+      {user && <UserSheet key={user} userId={user} role={role} onClose={() => setUser(null)} />}
     </div>
   );
 }
@@ -64,7 +64,7 @@ function describeDetails(action: string, d: Record<string, unknown>): ReactNode 
   }
   if (action === "fee_rule_saved") return `${feeOp(v("operation"))}: ${v("feeType") === "percent" ? `${v("feeValue")}%` : money(Number(v("feeValue")))}`;
   if (action === "fee_rule_deleted") return feeOp(v("operation"));
-  if (action === "partner_cost_saved") return `${OPERATION_LABELS[v("operation") as PnlOperation] ?? String(v("operation") ?? "")}: ${v("percent")}% + ${money(Number(v("flatUsd")))}`;
+  if (action === "partner_cost_saved") return `${String(v("operation") ?? "")}: ${v("percent")}% + ${money(Number(v("flatUsd")))}`;
   if (action === "partner_plan_applied") return `Gateway ${String(v("gateway"))}, Issuing ${String(v("issuing"))}`;
   return "";
 }

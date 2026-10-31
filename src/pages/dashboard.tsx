@@ -1,13 +1,15 @@
 // The admin console. Built for a computer first: a fixed menu on the left and a wide work area. On tablets and phones the
 // menu becomes a drawer opened from a top bar, and the tables scroll sideways inside their own box.
 import { useEffect, useState, type ComponentType } from "react";
-import { ArrowLeftRight, LayoutDashboard, LifeBuoy, LogOut, Menu, Percent, ScrollText, UserCog, Users } from "lucide-react";
+import { ArrowLeftRight, CreditCard, LayoutDashboard, LifeBuoy, LogOut, Menu, Percent, ScrollText, UserCog, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import type { AdminStatus } from "@/lib/api";
 import { LanguageSwitch } from "@/lib/i18n";
+import { useClosingDialog } from "@/lib/layers";
 import { cn } from "@/lib/utils";
 import { AccountTab } from "@/components/admin/account";
+import { CardsTab } from "@/components/admin/cards";
 import { FeesTab } from "@/components/admin/fees";
 import { OverviewTab } from "@/components/admin/overview";
 import { Pill } from "@/components/admin/shared";
@@ -19,12 +21,13 @@ const TABS: { id: string; label: string; icon: ComponentType<{ className?: strin
   { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "fees", label: "Fees", icon: Percent },
   { id: "users", label: "Customers", icon: Users },
+  { id: "cards", label: "Cards", icon: CreditCard },
   { id: "transactions", label: "Transactions", icon: ArrowLeftRight },
   { id: "support", label: "Support", icon: LifeBuoy },
   { id: "audit", label: "Audit log", icon: ScrollText },
   { id: "account", label: "My account", icon: UserCog },
 ];
-type TabId = "overview" | "fees" | "users" | "transactions" | "support" | "audit" | "account";
+type TabId = "overview" | "fees" | "users" | "cards" | "transactions" | "support" | "audit" | "account";
 
 const fromHash = (): TabId => {
   const id = window.location.hash.replace(/^#/, "");
@@ -80,6 +83,24 @@ function Who({ status, onSignOut, withLanguage }: { status: AdminStatus; onSignO
   );
 }
 
+/** The menu of a tablet or phone: a side panel that is only in the page while it is open. */
+function MobileMenu({ tab, onGo, onClose, status, onSignOut }: { tab: TabId; onGo: (id: TabId) => void; onClose: () => void; status: AdminStatus; onSignOut: () => void }) {
+  const { open, close } = useClosingDialog(onClose);
+  return (
+    <Sheet open={open} onOpenChange={(o) => { if (!o) close(); }}>
+      <SheetContent side="left" className="flex w-72 flex-col gap-6 p-4">
+        <SheetHeader className="sr-only">
+          <SheetTitle>Menu</SheetTitle>
+          <SheetDescription>Pages of the admin site</SheetDescription>
+        </SheetHeader>
+        <Brand />
+        <Nav tab={tab} onGo={(id) => { onGo(id); close(); }} />
+        <div className="mt-auto"><Who status={status} onSignOut={onSignOut} withLanguage={false} /></div>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
 export function Dashboard({ status, onSignOut }: { status: AdminStatus; onSignOut: () => void }) {
   const [tab, setTab] = useState<TabId>(fromHash);
   const [menu, setMenu] = useState(false);
@@ -101,7 +122,7 @@ export function Dashboard({ status, onSignOut }: { status: AdminStatus; onSignOu
     return () => { document.title = "Kasho Pay Admin"; };
   }, [label]);
 
-  const go = (id: TabId) => { setTab(id); setMenu(false); };
+  const go = (id: TabId) => setTab(id);
 
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[15rem_minmax(0,1fr)]">
@@ -118,24 +139,15 @@ export function Dashboard({ status, onSignOut }: { status: AdminStatus; onSignOu
         <div className="min-w-0 flex-1"><Brand /></div>
         <LanguageSwitch />
       </header>
-      <Sheet open={menu} onOpenChange={setMenu}>
-        <SheetContent side="left" className="flex w-72 flex-col gap-6 p-4">
-          <SheetHeader className="sr-only">
-            <SheetTitle>Menu</SheetTitle>
-            <SheetDescription>Pages of the admin site</SheetDescription>
-          </SheetHeader>
-          <Brand />
-          <Nav tab={tab} onGo={go} />
-          <div className="mt-auto"><Who status={status} onSignOut={onSignOut} withLanguage={false} /></div>
-        </SheetContent>
-      </Sheet>
+      {menu && <MobileMenu tab={tab} onGo={go} onClose={() => setMenu(false)} status={status} onSignOut={onSignOut} />}
 
       <main className="mx-auto w-full min-w-0 max-w-[1680px] px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
         <h1 className="mb-6 text-2xl font-semibold tracking-tight lg:text-3xl">{label}</h1>
         <section aria-label={label}>
-          {tab === "overview" && <OverviewTab onOpenFees={() => setTab("fees")} />}
-          {tab === "fees" && <FeesTab role={role} />}
+          {tab === "overview" && <OverviewTab />}
+          {tab === "fees" && <FeesTab />}
           {tab === "users" && <UsersTab role={role} />}
+          {tab === "cards" && <CardsTab role={role} />}
           {tab === "transactions" && <TransactionsTab role={role} />}
           {tab === "support" && <SupportTab role={role} />}
           {tab === "audit" && <AuditTab />}

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Kasho Pay admin platform: a separate site (own login with 2FA) to manage fees, customers, Freda balances and profit.",
+  "description": "Kasho Pay admin platform: a separate site (own login with 2FA) to manage fees, customers, cards and Freda balances.",
   "scripts": {
     "dev": "vite",
     "typecheck": "tsc --noEmit",
@@ -27,7 +27,6 @@
     "lucide-react": "^0.575.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "recharts": "^2.15.4",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.5.0"
   },

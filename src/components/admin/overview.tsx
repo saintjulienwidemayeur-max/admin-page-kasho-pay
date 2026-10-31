@@ -1,17 +1,16 @@
-// Admin > Overview: the Freda Pay Issuing balances (Master Wallet, Gateway), profit and loss, and what customers hold.
+// Admin > Overview: the Freda Pay Issuing balances (Master Wallet, Gateway) and what customers hold.
+// Real numbers only: no profit or margin figure (see the README).
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bar, CartesianGrid, ComposedChart, Line, XAxis, YAxis } from "recharts";
 import { AlertTriangle, RefreshCw, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
-import { adminFredaFunds, adminOverview, type AdminOverview, type PnlLine } from "@/lib/api";
+import { adminFredaFunds, adminOverview, type AdminOverview } from "@/lib/api";
 import { cn } from "@/lib/utils";
-import { ErrorBox, Loading, OPERATION_LABELS, Pill, Section, Stat, gourdes, money, percent, signTone, toneClass, when } from "./shared";
+import { ErrorBox, Loading, Pill, Section, Stat, gourdes, money, percent, when } from "./shared";
 
 const PERIODS = [{ days: 7, label: "7 days" }, { days: 30, label: "30 days" }, { days: 90, label: "90 days" }, { days: 365, label: "1 year" }] as const;
 
-export function OverviewTab({ onOpenFees }: { onOpenFees: () => void }) {
+export function OverviewTab() {
   const [days, setDays] = useState<number>(30);
   const query = useQuery({ queryKey: ["admin", "overview", days], queryFn: () => adminOverview({ data: { days } }), staleTime: 20_000 });
   const data = query.data;
@@ -37,13 +36,9 @@ export function OverviewTab({ onOpenFees }: { onOpenFees: () => void }) {
       {query.isPending ? <Loading /> : query.isError ? <ErrorBox error={query.error} onRetry={() => void query.refetch()} /> : data && (
         <>
           <FredaFunds data={data} days={days} />
-          <ProfitSummary data={data} onOpenFees={onOpenFees} />
-          {/* Wide screen: chart | customers, then table | funds check. Smaller: one after the other (two columns for the last pair). */}
-          <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-2 2xl:grid-cols-[minmax(0,1fr)_24rem] [&>div]:min-w-0">
-            <div className="lg:col-span-2 2xl:col-span-1 2xl:col-start-1 2xl:row-start-1 [&>section]:h-full"><DailyChart data={data} /></div>
-            <div className="lg:col-span-2 2xl:col-span-1 2xl:col-start-1 2xl:row-start-2"><OperationsTable data={data} /></div>
-            <div className="2xl:col-start-2 2xl:row-start-2 2xl:self-start"><FundsCheck data={data} /></div>
-            <div className="2xl:col-start-2 2xl:row-start-1 [&>section]:h-full"><Customers data={data} /></div>
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-2 [&>section]:min-w-0">
+            <FundsCheck data={data} />
+            <Customers data={data} />
           </div>
         </>
       )}
@@ -102,134 +97,6 @@ function FredaFunds({ data, days }: { data: AdminOverview; days: number }) {
           </div>
           <p className="flex items-center gap-1.5 text-xs text-muted-foreground"><Wallet className="h-3.5 w-3.5" /> {`Updated ${when(f.fetchedAt)}`}</p>
           {err !== null && <ErrorBox error={err} />}
-        </div>
-      )}
-    </Section>
-  );
-}
-
-// ------------------------------------------------------------------ profit
-function ProfitSummary({ data, onOpenFees }: { data: AdminOverview; onOpenFees: () => void }) {
-  const t = data.pnl.totals;
-  // Operations customers pay a fee for, and that cost us more than they paid.
-  const COST_ONLY: PnlLine["operation"][] = ["master_wallet_funding", "card_purchase", "plans"];
-  const losing = data.pnl.lines.filter((l) => l.count > 0 && l.profit < -0.004 && !COST_ONLY.includes(l.operation)).sort((a, b) => a.profit - b.profit);
-  // Freda costs that no customer fee covers directly: they have to be paid for by the fees above.
-  const costOnly = data.pnl.lines.filter((l) => (l.operation === "master_wallet_funding" || l.operation === "card_purchase") && l.partnerCost > 0.004);
-  return (
-    <Section title="Profit and loss" description={`From ${new Date(data.period.from).toLocaleDateString()} to today. Our fees are what customers paid. Freda's share is what Freda charged us (exact when Freda reported it, otherwise estimated from its price list).`}>
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <Stat label="Our fees (revenue)" value={money(t.revenue)} sub="Paid by customers" />
-        <Stat label="Freda's share" value={money(t.partnerCost)} sub="What the partner earns from our activity" tone="warn" />
-        <Stat label="Net profit" value={money(t.profit)} tone={signTone(t.profit)} sub={t.profit < 0 ? "We are losing money" : "After Freda's share"} />
-        <Stat label="Margin" value={percent(t.margin)} tone={t.margin === null ? "muted" : signTone(t.margin)} sub="Profit / our fees" />
-      </div>
-      {(losing.length > 0 || costOnly.length > 0 || data.truncated) && (
-        <ul className="mt-4 space-y-2 text-sm">
-          {losing.map((l) => (
-            <li key={l.operation} className="flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
-              <span>
-                <b>{OPERATION_LABELS[l.operation]}</b>
-                {` cost us ${money(-l.profit)} more than customers paid (${l.count} operation${l.count === 1 ? "" : "s"}).`}
-              </span>
-            </li>
-          ))}
-          {costOnly.map((l) => (
-            <li key={l.operation} className="flex items-start gap-2 rounded-xl border border-warning/40 bg-warning/10 px-3 py-2">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
-              <span>
-                {l.operation === "master_wallet_funding"
-                  ? `Freda also kept ${money(l.partnerCost)} on the money added to the Master Wallet for cards.`
-                  : `Freda also charged ${money(l.partnerCost)} for ${l.count} card purchase${l.count === 1 ? "" : "s"}.`}
-                {" "}No customer fee pays for this directly: the card fees have to cover it.
-              </span>
-            </li>
-          ))}
-          {data.truncated && <li className="rounded-xl border border-warning/40 bg-warning/10 px-3 py-2">Only the first 50 000 rows of this period were counted. Choose a shorter period for exact figures.</li>}
-        </ul>
-      )}
-      {losing.length > 0 && (
-        <Button variant="outline" size="sm" className="mt-4" onClick={onOpenFees}>See the fee analysis</Button>
-      )}
-    </Section>
-  );
-}
-
-const chartConfig = {
-  revenue: { label: "Our fees", color: "var(--chart-1)" },
-  partnerCost: { label: "Freda's share", color: "var(--chart-4)" },
-  profit: { label: "Profit", color: "var(--foreground)" },
-} satisfies ChartConfig;
-
-function DailyChart({ data }: { data: AdminOverview }) {
-  const rows = data.pnl.daily.map((d) => ({ ...d, label: new Date(`${d.date}T12:00:00`).toLocaleDateString([], { month: "short", day: "numeric" }) }));
-  return (
-    <Section title="Day by day" description="Fees collected, what Freda charged and the profit, per day (Haiti time). Monthly plan fees and the Master Wallet funding cost are in the totals but not in the daily bars.">
-      {rows.length === 0 ? (
-        <p className="py-10 text-center text-sm text-muted-foreground">No completed operations in this period yet.</p>
-      ) : (
-        <ChartContainer config={chartConfig} className="aspect-auto h-64 w-full 2xl:h-72">
-          <ComposedChart data={rows} margin={{ left: 0, right: 8, top: 8 }}>
-            <CartesianGrid vertical={false} />
-            <XAxis dataKey="label" tickLine={false} axisLine={false} minTickGap={24} />
-            <YAxis width={52} tickLine={false} axisLine={false} tickFormatter={(v: number) => `${v < 0 ? "-" : ""}$${Math.abs(v)}`} />
-            <ChartTooltip content={<ChartTooltipContent />} />
-            <ChartLegend content={<ChartLegendContent />} />
-            <Bar dataKey="revenue" fill="var(--color-revenue)" radius={[4, 4, 0, 0]} isAnimationActive={false} />
-            <Bar dataKey="partnerCost" fill="var(--color-partnerCost)" radius={[4, 4, 0, 0]} isAnimationActive={false} />
-            <Line dataKey="profit" type="monotone" stroke="var(--color-profit)" strokeWidth={2} dot={false} isAnimationActive={false} />
-          </ComposedChart>
-        </ChartContainer>
-      )}
-    </Section>
-  );
-}
-
-function OperationsTable({ data }: { data: AdminOverview }) {
-  const lines = data.pnl.lines.filter((l) => l.count > 0 || l.partnerCost > 0);
-  const t = data.pnl.totals;
-  const cell = "px-3 py-2.5 text-right tabular-nums";
-  const row = (l: PnlLine) => (
-    <tr key={l.operation} className="align-middle">
-      <td className="px-3 py-2.5">
-        <span className="font-medium">{OPERATION_LABELS[l.operation]}</span>
-        {l.estimated > 0 && <span title="Partly estimated from Freda's price list: Freda did not report the exact fee for every operation." className="ml-2 rounded bg-secondary px-1.5 py-0.5 text-[10px] text-muted-foreground">est.</span>}
-      </td>
-      <td className={cell}>{l.operation === "master_wallet_funding" || l.operation === "plans" ? "-" : l.count}</td>
-      <td className={cell}>{l.volume > 0 ? money(l.volume) : "-"}</td>
-      <td className={cell}>{l.revenue > 0 ? money(l.revenue) : "-"}</td>
-      <td className={cell}>{l.partnerCost > 0 ? money(l.partnerCost) : "-"}</td>
-      <td className={cn(cell, "font-semibold", toneClass(signTone(l.profit)))}>{money(l.profit)}</td>
-    </tr>
-  );
-  return (
-    <Section title="By operation" description="One line per kind of operation. Master Wallet funding is the percentage Freda keeps on the money added to the Master Wallet for cards.">
-      {lines.length === 0 ? (
-        <p className="py-8 text-center text-sm text-muted-foreground">Nothing to show for this period.</p>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[640px] text-sm">
-            <thead>
-              <tr className="border-b border-border text-xs text-muted-foreground">
-                <th className="px-3 py-2 text-left font-medium">Operation</th>
-                <th className="px-3 py-2 text-right font-medium">Count</th>
-                <th className="px-3 py-2 text-right font-medium">Volume</th>
-                <th className="px-3 py-2 text-right font-medium">Our fees</th>
-                <th className="px-3 py-2 text-right font-medium">Freda cost</th>
-                <th className="px-3 py-2 text-right font-medium">Profit</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">{lines.map(row)}</tbody>
-            <tfoot>
-              <tr className="border-t border-border font-semibold">
-                <td className="px-3 py-3">Total</td><td /><td />
-                <td className={cell}>{money(t.revenue)}</td>
-                <td className={cell}>{money(t.partnerCost)}</td>
-                <td className={cn(cell, toneClass(signTone(t.profit)))}>{money(t.profit)}</td>
-              </tr>
-            </tfoot>
-          </table>
         </div>
       )}
     </Section>

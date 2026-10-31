@@ -2,9 +2,11 @@
 import type { ReactNode } from "react";
 import { ChevronLeft, ChevronRight, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { errorMessage } from "@/lib/format";
-import type { FeeOperation, PnlOperation } from "@/lib/api";
+import { ApiError, errorCode, type FeeOperation } from "@/lib/api";
 
 /** "$1,234.56" / "-$5.00" (the French language switch turns it into "1 234,56 $" by itself). */
 export function money(n: number, opts: { sign?: boolean } = {}): string {
@@ -22,11 +24,6 @@ export const toneClass = (t: Tone) =>
   t === "good" ? "text-primary" : t === "bad" ? "text-destructive" : t === "warn" ? "text-warning" : t === "muted" ? "text-muted-foreground" : "text-foreground";
 export const signTone = (n: number): Tone => (n > 0.004 ? "good" : n < -0.004 ? "bad" : "plain");
 
-export const OPERATION_LABELS: Record<PnlOperation, string> = {
-  deposit: "Top-ups (MonCash / NatCash)", withdrawal: "Withdrawals (MonCash / NatCash)", card_creation: "Card creation", card_fund: "Card top-ups",
-  card_withdraw: "Card withdrawals", card_closure: "Card closings", transfer: "Kasho transfers", master_wallet_funding: "Master Wallet funding cost",
-  card_purchase: "Card purchases", plans: "Freda monthly plans",
-};
 export const FEE_OPERATION_LABELS: Record<FeeOperation, string> = {
   card_creation: "Card creation", wallet_deposit: "Wallet top-up", wallet_withdrawal: "Wallet withdrawal", card_fund: "Card top-up",
   card_withdraw: "Card withdrawal", transfer: "Kasho transfer",
@@ -68,6 +65,34 @@ export function Pill({ children, tone = "muted" }: { children: ReactNode; tone?:
 
 export const statusTone = (s: string): Tone => (s === "completed" || s === "verified" || s === "active" ? "good" : s === "failed" || s === "rejected" || s === "terminated" ? "bad" : s === "pending" || s === "disabled" ? "warn" : "muted");
 
+/** The state of a card (the database says "disabled" for a frozen card). */
+export const CARD_STATUS_LABELS: Record<string, string> = { active: "Active", disabled: "Frozen", pending: "Pending", failed: "Failed", terminated: "Terminated" };
+export const cardStatusTone = (s: string): Tone => (s === "active" ? "good" : s === "disabled" || s === "pending" ? "warn" : s === "failed" || s === "terminated" ? "bad" : "muted");
+
+/**
+ * What to show under the password field when the server refused the password (wrong, missing, too many tries),
+ * or null for any other problem (those are shown as a message at the top of the screen).
+ */
+export function passwordError(e: unknown): string | null {
+  const code = errorCode(e);
+  if (code === "PASSWORD_INVALID") return "Wrong password. Try again.";
+  if (code === "PASSWORD_REQUIRED") return "Enter your password.";
+  if (e instanceof ApiError && e.status === 429) return e.message;
+  return null;
+}
+
+/** The password asked again before something that changes money, prices or accounts: a field inside the window itself. */
+export function PasswordConfirm({ value, onChange, error, busy = false, id = "confirm-pw", label = "Your password", hint = "Asked again because this changes money, prices or accounts." }: { value: string; onChange: (v: string) => void; error?: string | undefined; busy?: boolean; id?: string; label?: string; hint?: string }) {
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={id}>{label}</Label>
+      <Input id={id} type="password" autoComplete="current-password" className="h-11 rounded-xl" value={value} readOnly={busy} onChange={(e) => onChange(e.target.value)} aria-invalid={!!error} aria-describedby={error ? `${id}-err` : undefined} />
+      <p className="text-xs text-muted-foreground">{hint}</p>
+      {error && <p id={`${id}-err`} role="alert" className="text-sm text-destructive">{error}</p>}
+    </div>
+  );
+}
+
 export function Loading({ label = "Loading..." }: { label?: string }) {
   return (
     <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground" role="status">
@@ -106,22 +131,4 @@ export function Pager({ page, pageSize, total, onPage }: { page: number; pageSiz
 
 export function Empty({ children }: { children: ReactNode }) {
   return <p className="py-10 text-center text-sm text-muted-foreground">{children}</p>;
-}
-
-/** A table that scrolls sideways on small screens instead of squeezing its columns. */
-export function Grid({ head, children, className }: { head: ReactNode[]; children: ReactNode; className?: string | undefined }) {
-  return (
-    <div className={cn("overflow-x-auto", className)}>
-      <table className="w-full min-w-[640px] text-sm">
-        <thead>
-          <tr className="border-b border-border text-left text-xs text-muted-foreground">
-            {head.map((h, i) => (
-              <th key={i} className={cn("whitespace-nowrap px-3 py-2 font-medium", i > 0 && typeof h === "string" && /^(Count|Volume|Our fees|Freda cost|Profit|Balance|Amount|Fee|Cards)$/.test(h) && "text-right")}>{h}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-border">{children}</tbody>
-      </table>
-    </div>
-  );
 }
