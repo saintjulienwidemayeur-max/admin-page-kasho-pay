@@ -272,7 +272,7 @@ export const MONTHS_FR: Record<string, string> = {
 
 export const PATTERNS: [RegExp, string][] = [
   [/^This site is not configured yet\. The build is missing: (.+)\. Add the missing build variables \(Cloudflare: Settings > Build > Variables and secrets\), then build again\.$/, "Ce site n'est pas encore configuré. Il manque au build : $1. Ajoutez les variables de build manquantes (Cloudflare : Paramètres > Compilations > Variables et secrets), puis relancez un build."],
-  [/^Cannot reach the Kasho server at (.+)\. Check your connection, then check that the backend allows this site \(ADMIN_ORIGINS\)\.$/, "Impossible de joindre le serveur Kasho sur $1. Vérifiez votre connexion, puis vérifiez que le serveur autorise ce site (ADMIN_ORIGINS)."],
+  [/^Cannot reach the Kasho server at (.+)\. Check your connection, then check that the backend allows this site: ADMIN_ORIGINS must contain (.+)$/, "Impossible de joindre le serveur Kasho sur $1. Vérifiez votre connexion, puis vérifiez que le serveur autorise ce site : ADMIN_ORIGINS doit contenir $2"],
   // ledger titles (the customer's transaction titles are written in English by the backend)
   [/^Top-up via (.+)$/, "Recharge via $1"],
   [/^Withdrawal to (.+)$/, "Retrait vers $1"],

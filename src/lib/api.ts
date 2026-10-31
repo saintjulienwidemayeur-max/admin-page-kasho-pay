@@ -44,8 +44,8 @@ async function call<T>(name: string, body: unknown = {}): Promise<T> {
     if (e instanceof DOMException && e.name === "AbortError") {
       throw new Error("The Kasho server took too long to answer. Please try again in a moment.");
     }
-    // The browser gives no reason for a blocked request: name the address, and the usual cause (the backend refusing this site).
-    throw new Error(`Cannot reach the Kasho server at ${hostOf(apiUrl())}. Check your connection, then check that the backend allows this site (ADMIN_ORIGINS).`);
+    // The browser gives no reason for a blocked request: name the address, and the usual cause (the backend not allowing this site's origin).
+    throw new Error(`Cannot reach the Kasho server at ${hostOf(apiUrl())}. Check your connection, then check that the backend allows this site: ADMIN_ORIGINS must contain ${window.location.origin}`);
   } finally {
     clearTimeout(timer);
   }

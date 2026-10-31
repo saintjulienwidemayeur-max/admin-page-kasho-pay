@@ -80,7 +80,7 @@ npm run build          # type check + production build into dist/
 
 ## If something does not work
 - *"This site is not configured yet. The build is missing: ..."*: the screen names the variables the build did not get. Add them as build variables (exact names, `VITE_API_URL` must start with `https://`) and build again.
-- *"Cannot reach the Kasho server at ..."*: the browser could not talk to that address: wrong `VITE_API_URL`, the backend is asleep, the backend does not allow this site (`ADMIN_ORIGINS` or `CORS_ORIGIN` on the server), or its domain is missing from `connect-src` in `public/_headers`.
+- *"Cannot reach the Kasho server at ..."*: the browser could not talk to that address: wrong `VITE_API_URL`, the backend is asleep (open `<backend>/health` to check), the backend does not allow this site, or its domain is missing from `connect-src` in `public/_headers`. The message ends with the exact origin of this site: put it in `ADMIN_ORIGINS` on the backend (Render > Environment) and redeploy it. The backend must also be the version that has the admin API.
 - *"The backend does not have the admin tools yet"*: the backend that answered is an older version. Deploy the version with the admin API.
 - *"The admin tools only work on the Kasho Pay admin site"*: the origin of this site is not in `ADMIN_ORIGINS` on the backend (exact `https://...` origin, no path, no trailing slash).
 - *"The admin site is not set up on the server yet (ADMIN_ORIGINS)"*: `ADMIN_ORIGINS` is empty on the production backend.
