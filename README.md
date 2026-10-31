@@ -36,7 +36,7 @@ On the backend set `ADMIN_ORIGINS=http://localhost:5174` (or leave it empty in d
 
 ## Deploy (Cloudflare)
 1. Cloudflare dashboard > Workers & Pages > Create > import this repository.
-2. Build command `npm run build`, deploy command `npx wrangler deploy` (`wrangler.jsonc` publishes `dist/` as a single-page app).
+2. Build command `npm run build`, deploy command `npx wrangler deploy` (`wrangler.jsonc` publishes `dist/` as a single-page app). Keep the Worker name `admin-page-kasho-pay` (the one in `wrangler.jsonc`): a different name in the dashboard makes the build fail.
 3. **Build variables** (the values are baked into the page at build time, so set them before the first build): `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` (the publishable key, never the service role key), `VITE_API_URL` (the backend URL).
 4. Settings > Domains: add the domain, for example `admin.kashopay.com`.
 5. On Render (backend) set `ADMIN_ORIGINS=https://admin.kashopay.com` (no trailing slash) and redeploy. Without it the admin tools are off in production.
