@@ -38,11 +38,12 @@ export function OverviewTab({ onOpenFees }: { onOpenFees: () => void }) {
         <>
           <FredaFunds data={data} days={days} />
           <ProfitSummary data={data} onOpenFees={onOpenFees} />
-          <DailyChart data={data} />
-          <OperationsTable data={data} />
-          <div className="grid gap-6 lg:grid-cols-2">
-            <FundsCheck data={data} />
-            <Customers data={data} />
+          {/* Wide screen: chart | customers, then table | funds check. Smaller: one after the other (two columns for the last pair). */}
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-2 2xl:grid-cols-[minmax(0,1fr)_24rem] [&>div]:min-w-0">
+            <div className="lg:col-span-2 2xl:col-span-1 2xl:col-start-1 2xl:row-start-1 [&>section]:h-full"><DailyChart data={data} /></div>
+            <div className="lg:col-span-2 2xl:col-span-1 2xl:col-start-1 2xl:row-start-2"><OperationsTable data={data} /></div>
+            <div className="2xl:col-start-2 2xl:row-start-2 2xl:self-start"><FundsCheck data={data} /></div>
+            <div className="2xl:col-start-2 2xl:row-start-1 [&>section]:h-full"><Customers data={data} /></div>
           </div>
         </>
       )}
@@ -168,7 +169,7 @@ function DailyChart({ data }: { data: AdminOverview }) {
       {rows.length === 0 ? (
         <p className="py-10 text-center text-sm text-muted-foreground">No completed operations in this period yet.</p>
       ) : (
-        <ChartContainer config={chartConfig} className="aspect-auto h-64 w-full">
+        <ChartContainer config={chartConfig} className="aspect-auto h-64 w-full 2xl:h-72">
           <ComposedChart data={rows} margin={{ left: 0, right: 8, top: 8 }}>
             <CartesianGrid vertical={false} />
             <XAxis dataKey="label" tickLine={false} axisLine={false} minTickGap={24} />

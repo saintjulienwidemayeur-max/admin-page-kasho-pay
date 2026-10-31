@@ -60,7 +60,7 @@ function Analysis({ rows }: { rows: FeeAnalysisRow[] }) {
           </>
           : <>Every case below earns us money.</>}
       </p>
-      <div className="grid gap-4 xl:grid-cols-2">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-4 xl:grid-cols-2 2xl:grid-cols-3">
         {OPS.map((op) => {
           const list = rows.filter((r) => r.operation === op);
           if (!list.length) return null;

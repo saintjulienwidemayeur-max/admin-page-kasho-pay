@@ -103,7 +103,7 @@ export function UserSheet({ userId, role, onClose }: { userId: string | null; ro
 
   return (
     <Sheet open={!!userId} onOpenChange={(o) => { if (!o) onClose(); }}>
-      <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-xl">
+      <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-xl lg:max-w-2xl">
         <SheetHeader className="text-left">
           <SheetTitle>{u?.profile.name ?? "Customer"}</SheetTitle>
           <SheetDescription>{u?.email ?? "Loading the customer..."}</SheetDescription>

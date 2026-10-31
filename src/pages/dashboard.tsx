@@ -1,10 +1,12 @@
-// The admin dashboard: tabs for the overview, fees, customers, transactions, support, audit log and the account.
-import { useEffect, useState } from "react";
-import { LogOut } from "lucide-react";
+// The admin console. Built for a computer first: a fixed menu on the left and a wide work area. On tablets and phones the
+// menu becomes a drawer opened from a top bar, and the tables scroll sideways inside their own box.
+import { useEffect, useState, type ComponentType } from "react";
+import { ArrowLeftRight, LayoutDashboard, LifeBuoy, LogOut, Menu, Percent, ScrollText, UserCog, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import type { AdminStatus } from "@/lib/api";
 import { LanguageSwitch } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 import { AccountTab } from "@/components/admin/account";
 import { FeesTab } from "@/components/admin/fees";
 import { OverviewTab } from "@/components/admin/overview";
@@ -13,27 +15,77 @@ import { AuditTab, SupportTab } from "@/components/admin/support";
 import { TransactionsTab } from "@/components/admin/transactions";
 import { UsersTab } from "@/components/admin/users";
 
-const TABS = [
-  { id: "overview", label: "Overview" },
-  { id: "fees", label: "Fees" },
-  { id: "users", label: "Customers" },
-  { id: "transactions", label: "Transactions" },
-  { id: "support", label: "Support" },
-  { id: "audit", label: "Audit log" },
-  { id: "account", label: "My account" },
-] as const;
-type TabId = (typeof TABS)[number]["id"];
+const TABS: { id: string; label: string; icon: ComponentType<{ className?: string }> }[] = [
+  { id: "overview", label: "Overview", icon: LayoutDashboard },
+  { id: "fees", label: "Fees", icon: Percent },
+  { id: "users", label: "Customers", icon: Users },
+  { id: "transactions", label: "Transactions", icon: ArrowLeftRight },
+  { id: "support", label: "Support", icon: LifeBuoy },
+  { id: "audit", label: "Audit log", icon: ScrollText },
+  { id: "account", label: "My account", icon: UserCog },
+];
+type TabId = "overview" | "fees" | "users" | "transactions" | "support" | "audit" | "account";
 
 const fromHash = (): TabId => {
   const id = window.location.hash.replace(/^#/, "");
-  return TABS.some((t) => t.id === id) ? (id as TabId) : "overview";
+  return (TABS.some((t) => t.id === id) ? id : "overview") as TabId;
 };
+
+function Brand() {
+  return (
+    <div className="flex items-center gap-3">
+      <img src="/logo.png" alt="" width={36} height={36} className="h-9 w-9 rounded-xl" />
+      <div className="min-w-0">
+        <p className="truncate text-base font-semibold leading-tight">Kasho Pay Admin</p>
+        <p className="text-[11px] text-muted-foreground">Authorized staff only</p>
+      </div>
+    </div>
+  );
+}
+
+function Nav({ tab, onGo }: { tab: TabId; onGo: (id: TabId) => void }) {
+  return (
+    <nav aria-label="Main navigation" className="flex flex-col gap-1">
+      {TABS.map(({ id, label, icon: Icon }) => (
+        <a
+          key={id}
+          href={`#${id}`}
+          aria-current={tab === id ? "page" : undefined}
+          onClick={() => onGo(id as TabId)}
+          className={cn(
+            "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium outline-none transition focus-visible:ring-2 focus-visible:ring-ring",
+            tab === id ? "bg-primary text-primary-foreground shadow-neon" : "text-muted-foreground hover:bg-secondary hover:text-foreground",
+          )}
+        >
+          <Icon className="h-4 w-4 shrink-0" /> {label}
+        </a>
+      ))}
+    </nav>
+  );
+}
+
+function Who({ status, onSignOut, withLanguage }: { status: AdminStatus; onSignOut: () => void; withLanguage: boolean }) {
+  return (
+    <div className="space-y-3 border-t border-border pt-4">
+      <div className="min-w-0 space-y-1.5">
+        <Pill tone="good">{status.role === "super" ? "Super administrator" : "Administrator"}</Pill>
+        <p data-no-i18n className="truncate text-xs text-muted-foreground" title={status.email}>{status.email}</p>
+      </div>
+      <div className="flex items-center justify-between gap-2">
+        {withLanguage ? <LanguageSwitch /> : <span />}
+        <Button variant="outline" size="sm" className="rounded-full" onClick={onSignOut}><LogOut className="h-4 w-4" /> Sign out</Button>
+      </div>
+    </div>
+  );
+}
 
 export function Dashboard({ status, onSignOut }: { status: AdminStatus; onSignOut: () => void }) {
   const [tab, setTab] = useState<TabId>(fromHash);
+  const [menu, setMenu] = useState(false);
   const role = status.role ?? "admin";
+  const label = TABS.find((t) => t.id === tab)?.label ?? "";
 
-  // The tab is kept in the address (#fees) so a refresh or a shared link opens the same page.
+  // The page is kept in the address (#fees): a refresh, the Back button and a shared link open the same page.
   useEffect(() => {
     if (window.location.hash !== `#${tab}`) window.history.replaceState(null, "", `#${tab}`);
   }, [tab]);
@@ -42,41 +94,53 @@ export function Dashboard({ status, onSignOut }: { status: AdminStatus; onSignOu
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
+  // The browser tab says which page is open (useful with several tabs).
+  useEffect(() => {
+    document.title = `${label} | Kasho Pay Admin`;
+    return () => { document.title = "Kasho Pay Admin"; };
+  }, [label]);
+
+  const go = (id: TabId) => { setTab(id); setMenu(false); };
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6">
-      <header className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <img src="/logo.png" alt="" width={40} height={40} className="h-10 w-10 rounded-xl" />
-          <div>
-            <h1 className="text-xl font-semibold leading-tight">Kasho Pay Admin</h1>
-            <div className="mt-0.5 flex flex-wrap items-center gap-2">
-              <Pill tone="good">{role === "super" ? "Super administrator" : "Administrator"}</Pill>
-              <span data-no-i18n className="text-xs text-muted-foreground">{status.email}</span>
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <LanguageSwitch />
-          <Button variant="outline" size="sm" className="rounded-full" onClick={onSignOut}><LogOut className="h-4 w-4" /> Sign out</Button>
-        </div>
+    <div className="min-h-dvh lg:grid lg:grid-cols-[15rem_minmax(0,1fr)]">
+      {/* Computer: fixed menu on the left */}
+      <aside className="sticky top-0 hidden h-dvh flex-col gap-6 overflow-y-auto border-r border-border bg-card/40 px-4 py-6 lg:flex">
+        <Brand />
+        <Nav tab={tab} onGo={go} />
+        <div className="mt-auto"><Who status={status} onSignOut={onSignOut} withLanguage /></div>
+      </aside>
+
+      {/* Tablet and phone: top bar with the menu drawer */}
+      <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-border bg-background/90 px-4 py-2.5 backdrop-blur lg:hidden">
+        <Button variant="outline" size="icon" className="h-10 w-10 shrink-0 rounded-xl" aria-label="Menu" onClick={() => setMenu(true)}><Menu className="h-5 w-5" /></Button>
+        <div className="min-w-0 flex-1"><Brand /></div>
+        <LanguageSwitch />
       </header>
+      <Sheet open={menu} onOpenChange={setMenu}>
+        <SheetContent side="left" className="flex w-72 flex-col gap-6 p-4">
+          <SheetHeader className="sr-only">
+            <SheetTitle>Menu</SheetTitle>
+            <SheetDescription>Pages of the admin site</SheetDescription>
+          </SheetHeader>
+          <Brand />
+          <Nav tab={tab} onGo={go} />
+          <div className="mt-auto"><Who status={status} onSignOut={onSignOut} withLanguage={false} /></div>
+        </SheetContent>
+      </Sheet>
 
-      <Tabs value={tab} onValueChange={(v) => setTab(v as TabId)} className="mt-6">
-        <TabsList className="h-auto w-full flex-wrap justify-start gap-1 rounded-xl border border-border bg-card p-1">
-          {TABS.map((t) => <TabsTrigger key={t.id} value={t.id} className="rounded-lg px-3 py-2">{t.label}</TabsTrigger>)}
-        </TabsList>
-      </Tabs>
-
-      <div role="tabpanel" aria-label={TABS.find((t) => t.id === tab)?.label} className="mt-6">
-        {tab === "overview" && <OverviewTab onOpenFees={() => setTab("fees")} />}
-        {tab === "fees" && <FeesTab role={role} />}
-        {tab === "users" && <UsersTab role={role} />}
-        {tab === "transactions" && <TransactionsTab role={role} />}
-        {tab === "support" && <SupportTab role={role} />}
-        {tab === "audit" && <AuditTab />}
-        {tab === "account" && <AccountTab status={status} />}
-      </div>
+      <main className="mx-auto w-full min-w-0 max-w-[1680px] px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
+        <h1 className="mb-6 text-2xl font-semibold tracking-tight lg:text-3xl">{label}</h1>
+        <section aria-label={label}>
+          {tab === "overview" && <OverviewTab onOpenFees={() => setTab("fees")} />}
+          {tab === "fees" && <FeesTab role={role} />}
+          {tab === "users" && <UsersTab role={role} />}
+          {tab === "transactions" && <TransactionsTab role={role} />}
+          {tab === "support" && <SupportTab role={role} />}
+          {tab === "audit" && <AuditTab />}
+          {tab === "account" && <AccountTab status={status} />}
+        </section>
+      </main>
     </div>
   );
 }

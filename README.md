@@ -21,7 +21,9 @@ refuses every admin request that does not come from this site's origin (`ADMIN_O
 | Audit log | what every administrator did (nobody can edit or delete it) |
 | My account | change the password |
 
-English and French (switch at the top right; `?i18n-debug=1` lists untranslated texts in the console).
+Made for a computer first: a fixed menu on the left, a wide work area that uses large screens (up to 4K), and the page open in the address (`#fees`) so the Back button, a refresh and a shared link all work; the browser tab shows the page name. On a tablet or phone the menu becomes a drawer behind the Menu button and the tables scroll sideways inside their own box.
+
+English and French (switch in the menu, or at the top right on a phone; `?i18n-debug=1` lists untranslated texts in the console).
 Roles: a `super` administrator can do everything; an `admin` can read everything and manage the customer fee schedule.
 
 ## Run it locally
@@ -57,7 +59,7 @@ Any other static host works too: publish `dist/`, answer every path with `index.
 ## Project layout
 ```
 src/App.tsx            login / 2FA / dashboard gate (lib/gate.ts), idle sign-out (lib/idle.ts)
-src/pages/             login, 2FA setup and code screens, dashboard (tabs)
+src/pages/             login, 2FA setup and code screens, dashboard (left menu on a computer, drawer on a phone)
 src/components/admin/  one file per tab
 src/lib/api.ts         backend client (Bearer token) and the types of its answers
 src/lib/i18n/          English / French runtime and dictionary

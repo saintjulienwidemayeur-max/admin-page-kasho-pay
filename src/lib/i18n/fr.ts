@@ -258,6 +258,9 @@ export const FR: Record<string, string> = {
   "Transfer": "Transfert",
   "Wallet": "Portefeuille",
   "Card activity": "Activité de carte",
+  "Main navigation": "Navigation principale",
+  "Menu": "Menu",
+  "Pages of the admin site": "Pages du site d'administration",
 };
 
 export const MONTHS_FR: Record<string, string> = {

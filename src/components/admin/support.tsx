@@ -12,7 +12,7 @@ export function SupportTab({ role }: { role: AdminRole }) {
   if (query.isError) return <ErrorBox error={query.error} onRetry={() => void query.refetch()} />;
   const { disputes, messages } = query.data;
   return (
-    <div className="space-y-6">
+    <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-6 xl:grid-cols-2">
       <Section title="Disputes" description="Customers who contested a transaction. Newest first.">
         {disputes.length === 0 ? <Empty>No dispute.</Empty> : (
           <ul className="divide-y divide-border">
