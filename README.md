@@ -84,4 +84,7 @@ npm run build          # type check + production build into dist/
 - *"The backend does not have the admin tools yet"*: the backend that answered is an older version. Deploy the version with the admin API.
 - *"The admin tools only work on the Kasho Pay admin site"*: the origin of this site is not in `ADMIN_ORIGINS` on the backend (exact `https://...` origin, no path, no trailing slash).
 - *"The admin site is not set up on the server yet (ADMIN_ORIGINS)"*: `ADMIN_ORIGINS` is empty on the production backend.
+- *"Something went wrong on this page"*: a screen crashed. The box shows the error and the version of the site (`v 1234567`, also at the bottom of the menu): send both, then press "Reload the page".
+- Back on the login screen with a message: the session ended and the message says why (the server and Supabase both refused it, or 20 minutes without activity). A single "session expired" answer from the server that Supabase does not confirm does not sign you out: the screen shows the message and "Try again".
+- The page stops answering clicks after a window closes: the site puts it right by itself within a few seconds (Radix modals, see `src/lib/layers.ts`). The browser's own page translation is switched off on purpose (it breaks React pages): use the EN / FR switch.
 - *"This account is not allowed to use the admin site"*: the account is not in the backend `admins` table.

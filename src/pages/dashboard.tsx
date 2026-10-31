@@ -70,6 +70,7 @@ function Who({ status, onSignOut, withLanguage }: { status: AdminStatus; onSignO
       <div className="min-w-0 space-y-1.5">
         <Pill tone="good">{status.role === "super" ? "Super administrator" : "Administrator"}</Pill>
         <p data-no-i18n className="truncate text-xs text-muted-foreground" title={status.email}>{status.email}</p>
+        <p data-no-i18n className="text-[11px] text-muted-foreground/70">{`v ${__BUILD__}`}</p>
       </div>
       <div className="flex items-center justify-between gap-2">
         {withLanguage ? <LanguageSwitch /> : <span />}

@@ -2,7 +2,7 @@
 // The backend is the judge (adminStatus); this hook only follows what it says and shows the right screen.
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
-import { adminStatus, setMfaRequiredHandler, type AdminStatus } from "@/lib/api";
+import { adminStatus, setMfaRequiredHandler, setSessionEndedHandler, type AdminStatus } from "@/lib/api";
 import { errorMessage } from "@/lib/format";
 import { configError, supabase } from "@/lib/supabase";
 
@@ -63,9 +63,12 @@ export function useAdminGate() {
     });
     // The backend says this session has not passed 2FA (for example after the token was renewed): ask for the code again.
     setMfaRequiredHandler(() => void supabase.auth.getSession().then(({ data: s }) => evaluate(s.session)));
+    // The session really ended (the backend and Supabase both refuse it): say so on the login screen.
+    setSessionEndedHandler((message) => setNotice(message));
     return () => {
       data.subscription.unsubscribe();
       setMfaRequiredHandler(null);
+      setSessionEndedHandler(null);
     };
   }, [evaluate]);
 

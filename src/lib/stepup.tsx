@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
 import { errorMessage } from "@/lib/format";
+import { whenDialogsSettled } from "@/lib/layers";
 
 /** Returns the verified TOTP factor id, or null if the user has no 2FA. */
 export async function verifiedTotpFactor(): Promise<string | null> {
@@ -34,6 +35,8 @@ export function useStepUp() {
   const pending = useRef<{ resolve: (v: unknown) => void; reject: (e: Error) => void; action?: ((p: string) => Promise<unknown>) | undefined } | null>(null);
 
   const ask = useCallback((async (action?: (p: string) => Promise<unknown>): Promise<unknown> => {
+    // The window the click came from (a confirmation) may still be closing: let it go first, two modals changing at once can freeze the page.
+    await whenDialogsSettled();
     const factor = await verifiedTotpFactor();
     const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
     // Code needed only if 2FA is on and this session has not passed it yet.
@@ -76,12 +79,14 @@ export function useStepUp() {
           }
           pending.current = null;
           setOpen(false);
+          await whenDialogsSettled();
           p.reject(e instanceof Error ? e : new Error(errorMessage(e)));
           return;
         }
       }
       pending.current = null;
       setOpen(false);
+      await whenDialogsSettled(); // the caller usually closes its own window next: one modal at a time
       p.resolve(result);
     } catch (e) {
       setError(errorMessage(e));

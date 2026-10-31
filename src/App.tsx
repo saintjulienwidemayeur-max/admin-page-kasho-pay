@@ -4,8 +4,8 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
 import { useAdminGate } from "@/lib/gate";
-import { I18nRuntime } from "@/lib/i18n";
 import { useIdleTimeout } from "@/lib/idle";
+import { useUnstickBody } from "@/lib/layers";
 import { AuthShell } from "@/pages/auth-shell";
 import { LoginPage } from "@/pages/login";
 import { MfaPage } from "@/pages/mfa";
@@ -27,6 +27,7 @@ const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false,
 
 export default function App() {
   const { gate, notice, recheck, signOut } = useAdminGate();
+  useUnstickBody();
   const ready = gate.step === "ready";
   const idleOut = useCallback(() => {
     queryClient.clear();
@@ -77,7 +78,6 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       {screen}
       <Toaster />
-      <I18nRuntime />
     </QueryClientProvider>
   );
 }

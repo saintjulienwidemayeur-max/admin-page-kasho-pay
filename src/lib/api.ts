@@ -1,5 +1,6 @@
 // Client for the Kasho Pay backend (kasho-pay-backend). Every call sends the Supabase access token; the backend
 // verifies it, checks the `admins` table and the 2FA level, and refuses requests that do not come from this site.
+import { isAuthRetryableFetchError } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 
 /** Error from the Kasho backend. `code` is the machine-readable reason (MFA_REQUIRED, PASSWORD_INVALID...). */
@@ -25,6 +26,26 @@ function apiUrl(): string {
 // The login gate registers here so a "2FA required" answer from the backend sends the administrator back to the code screen.
 let onMfaRequired: (() => void) | null = null;
 export const setMfaRequiredHandler = (fn: (() => void) | null) => { onMfaRequired = fn; };
+
+// The gate registers here to tell the login screen why the session ended.
+let onSessionEnded: ((message: string) => void) | null = null;
+export const setSessionEndedHandler = (fn: ((message: string) => void) | null) => { onSessionEnded = fn; };
+
+/**
+ * The backend answered 401 ("session expired"). The administrator is only signed out if Supabase refuses the session too:
+ * a hiccup between the backend and Supabase must not end a working session in the middle of an operation.
+ */
+async function endSessionIfInvalid(message: string | undefined) {
+  try {
+    const { data, error } = await supabase.auth.getUser();
+    if (data.user && !error) return; // still valid: keep it, the call just fails with its message
+    if (error && isAuthRetryableFetchError(error)) return; // Supabase could not be reached: cannot tell, keep it
+  } catch {
+    return;
+  }
+  onSessionEnded?.(message ?? "Your session ended. Please sign in again.");
+  await supabase.auth.signOut();
+}
 
 async function call<T>(name: string, body: unknown = {}): Promise<T> {
   const { data: sess } = await supabase.auth.getSession();
@@ -58,7 +79,7 @@ async function call<T>(name: string, body: unknown = {}): Promise<T> {
   if (!res.ok) {
     const code: string | undefined = typeof json?.error?.code === "string" ? json.error.code : undefined;
     if (res.status === 403 && code === "MFA_REQUIRED") onMfaRequired?.();
-    if (res.status === 401) void supabase.auth.signOut();
+    if (res.status === 401) await endSessionIfInvalid(json?.error?.message);
     // A backend that was not updated yet does not know the admin endpoints.
     if (res.status === 404 && json?.error?.message === "Unknown endpoint.") {
       throw new ApiError("The backend does not have the admin tools yet. Deploy its latest version (the admin API), then try again.", 404, "UNKNOWN_ENDPOINT");

@@ -264,6 +264,13 @@ export const FR: Record<string, string> = {
   "The admin tools only work on the Kasho Pay admin site.": "Les outils d'administration ne fonctionnent que sur le site d'administration de Kasho Pay.",
   "The admin site is not set up on the server yet (ADMIN_ORIGINS).": "Le site d'administration n'est pas encore configuré sur le serveur (ADMIN_ORIGINS).",
   "This action is not available from the admin site.": "Cette action n'est pas disponible depuis le site d'administration.",
+  // a crashed page and an ended session
+  "Something went wrong on this page": "Une erreur est survenue sur cette page",
+  "The page hit an unexpected problem. Reload it, and if it happens again send this text to support:": "La page a rencontré un problème inattendu. Rechargez-la et, si cela se reproduit, envoyez ce texte au support :",
+  "Reload the page": "Recharger la page",
+  "Your session ended. Please sign in again.": "Votre session est terminée. Reconnectez-vous.",
+  "Your session expired. Please log in again.": "Votre session a expiré. Reconnectez-vous.",
+  "Please log in.": "Veuillez vous connecter.",
 };
 
 export const MONTHS_FR: Record<string, string> = {

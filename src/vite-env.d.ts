@@ -8,3 +8,6 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+/** Short id of the commit this site was built from (injected by vite.config.ts). */
+declare const __BUILD__: string;
