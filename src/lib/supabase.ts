@@ -1,12 +1,23 @@
 // Supabase client of the admin site (same project as the Kasho Pay app, publishable key only).
 import { createClient } from "@supabase/supabase-js";
 
-const url = import.meta.env.VITE_SUPABASE_URL;
-const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+const url = import.meta.env.VITE_SUPABASE_URL?.trim();
+const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim();
+const api = import.meta.env.VITE_API_URL?.trim();
 
-/** Set when the build has no Supabase settings: the site then shows this instead of a broken login. */
-export const configError: string | null =
-  !url || !key ? "This site is not configured yet: set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY (see .env.example) and build again." : null;
+// Vite bakes these values into the page when the site is BUILT: a variable added later only counts after a new build.
+// A production build also needs the backend address (https); without it the page would call localhost and fail.
+const missing = [
+  !url && "VITE_SUPABASE_URL",
+  !key && "VITE_SUPABASE_PUBLISHABLE_KEY",
+  import.meta.env.PROD && !api && "VITE_API_URL",
+  import.meta.env.PROD && !!api && !/^https:\/\//i.test(api) && "VITE_API_URL (must start with https://)",
+].filter((m): m is string => typeof m === "string");
+
+/** Set when the build lacks a setting: the site then says which one, instead of a broken login. */
+export const configError: string | null = missing.length
+  ? `This site is not configured yet. The build is missing: ${missing.join(", ")}. Add the missing build variables (Cloudflare: Settings > Build > Variables and secrets), then build again.`
+  : null;
 
 // New-style publishable keys ("sb_publishable_...") are opaque strings, not bearer JWTs: never send them as Authorization.
 function supabaseFetch(apiKey: string): typeof fetch {

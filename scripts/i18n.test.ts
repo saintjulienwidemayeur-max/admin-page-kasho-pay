@@ -26,4 +26,8 @@ test("the main screens are translated", () => {
   assert.equal(tr("Top-up via MonCash"), "Recharge via MonCash");
   assert.equal(tr("Signed in as a@b.c. Open your authenticator app and enter the 6-digit code."), "Connecté en tant que a@b.c. Ouvrez votre application d'authentification et saisissez le code à 6 chiffres.");
   assert.equal(tr("One adjustment is limited to $10000.00."), "Un ajustement est limité à $10000.00.");
+  // the setup messages the site shows when something is missing
+  assert.match(tr("This site is not configured yet. The build is missing: VITE_API_URL. Add the missing build variables (Cloudflare: Settings > Build > Variables and secrets), then build again.")!, /^Ce site n'est pas encore configuré\. Il manque au build : VITE_API_URL\./);
+  assert.match(tr("Cannot reach the Kasho server at kasho-pay-backend.onrender.com. Check your connection, then check that the backend allows this site (ADMIN_ORIGINS).")!, /^Impossible de joindre le serveur Kasho sur kasho-pay-backend\.onrender\.com\./);
+  for (const en of ["The backend does not have the admin tools yet. Deploy its latest version (the admin API), then try again.", "The admin tools only work on the Kasho Pay admin site.", "The admin site is not set up on the server yet (ADMIN_ORIGINS).", "This action is not available from the admin site."]) assert.ok(FR[en], en);
 });

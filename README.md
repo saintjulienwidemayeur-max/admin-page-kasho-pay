@@ -37,7 +37,12 @@ On the backend set `ADMIN_ORIGINS=http://localhost:5174` (or leave it empty in d
 ## Deploy (Cloudflare)
 1. Cloudflare dashboard > Workers & Pages > Create > import this repository.
 2. Build command `npm run build`, deploy command `npx wrangler deploy` (`wrangler.jsonc` publishes `dist/` as a single-page app). Keep the Worker name `admin-page-kasho-pay` (the one in `wrangler.jsonc`): a different name in the dashboard makes the build fail.
-3. **Build variables** (the values are baked into the page at build time, so set them before the first build): `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` (the publishable key, never the service role key), `VITE_API_URL` (the backend URL).
+3. **Build variables** (Settings > Build > Variables and secrets: the build section, not the "Variables and secrets" of the runtime, which is greyed out for a static site: that is normal). Add all three, with exactly these names:
+   - `VITE_SUPABASE_URL`: the Supabase project URL, `https://<project>.supabase.co`
+   - `VITE_SUPABASE_PUBLISHABLE_KEY`: the publishable (anon) key, never the service role key
+   - `VITE_API_URL`: the backend URL, `https://...` (for example the Render address)
+
+   The values are baked into the page when it is **built**: after adding or changing one, start a new build (Deployments > the build > Retry build, or push a commit). If one is missing the site says so on its first screen.
 4. Settings > Domains: add the domain, for example `admin.kashopay.com`.
 5. On Render (backend) set `ADMIN_ORIGINS=https://admin.kashopay.com` (no trailing slash) and redeploy. Without it the admin tools are off in production.
 6. If the backend has its own domain (not `*.onrender.com`), add it to `connect-src` in `public/_headers` before building.
@@ -74,8 +79,9 @@ npm run build          # type check + production build into dist/
 ```
 
 ## If something does not work
-- *"This site is not configured yet"*: the `VITE_...` variables were missing when the site was built. Set them and build again.
-- *"Cannot reach the Kasho server"*: wrong `VITE_API_URL`, the backend is asleep, or the browser blocked the request (the backend origin is missing from `connect-src` in `public/_headers`).
+- *"This site is not configured yet. The build is missing: ..."*: the screen names the variables the build did not get. Add them as build variables (exact names, `VITE_API_URL` must start with `https://`) and build again.
+- *"Cannot reach the Kasho server at ..."*: the browser could not talk to that address: wrong `VITE_API_URL`, the backend is asleep, the backend does not allow this site (`ADMIN_ORIGINS` or `CORS_ORIGIN` on the server), or its domain is missing from `connect-src` in `public/_headers`.
+- *"The backend does not have the admin tools yet"*: the backend that answered is an older version. Deploy the version with the admin API.
 - *"The admin tools only work on the Kasho Pay admin site"*: the origin of this site is not in `ADMIN_ORIGINS` on the backend (exact `https://...` origin, no path, no trailing slash).
 - *"The admin site is not set up on the server yet (ADMIN_ORIGINS)"*: `ADMIN_ORIGINS` is empty on the production backend.
 - *"This account is not allowed to use the admin site"*: the account is not in the backend `admins` table.

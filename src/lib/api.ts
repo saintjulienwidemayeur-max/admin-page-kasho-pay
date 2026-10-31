@@ -15,6 +15,8 @@ export class ApiError extends Error {
 }
 export const errorCode = (e: unknown): string | undefined => (e as { code?: string } | null)?.code;
 
+const hostOf = (u: string) => { try { return new URL(u).host; } catch { return u; } };
+
 function apiUrl(): string {
   const env = import.meta.env.VITE_API_URL;
   return (env ?? "http://localhost:4000").replace(/\/+$/, "");
@@ -42,7 +44,8 @@ async function call<T>(name: string, body: unknown = {}): Promise<T> {
     if (e instanceof DOMException && e.name === "AbortError") {
       throw new Error("The Kasho server took too long to answer. Please try again in a moment.");
     }
-    throw new Error("Cannot reach the Kasho server. Check your connection and try again.");
+    // The browser gives no reason for a blocked request: name the address, and the usual cause (the backend refusing this site).
+    throw new Error(`Cannot reach the Kasho server at ${hostOf(apiUrl())}. Check your connection, then check that the backend allows this site (ADMIN_ORIGINS).`);
   } finally {
     clearTimeout(timer);
   }
@@ -56,6 +59,10 @@ async function call<T>(name: string, body: unknown = {}): Promise<T> {
     const code: string | undefined = typeof json?.error?.code === "string" ? json.error.code : undefined;
     if (res.status === 403 && code === "MFA_REQUIRED") onMfaRequired?.();
     if (res.status === 401) void supabase.auth.signOut();
+    // A backend that was not updated yet does not know the admin endpoints.
+    if (res.status === 404 && json?.error?.message === "Unknown endpoint.") {
+      throw new ApiError("The backend does not have the admin tools yet. Deploy its latest version (the admin API), then try again.", 404, "UNKNOWN_ENDPOINT");
+    }
     throw new ApiError(json?.error?.message ?? (json ? "Something went wrong. Please try again." : `The server did not answer correctly (HTTP ${res.status}). Please try again in a moment.`), res.status, code);
   }
   return json.data as T;

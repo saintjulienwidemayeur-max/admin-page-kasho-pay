@@ -217,10 +217,8 @@ export const FR: Record<string, string> = {
   "Sign out": "Se déconnecter",
   "Loading": "Chargement",
   "Not configured": "Non configuré",
-  "This site is not configured yet: set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY (see .env.example) and build again.": "Ce site n'est pas encore configuré : renseignez VITE_SUPABASE_URL et VITE_SUPABASE_PUBLISHABLE_KEY (voir .env.example), puis recompilez.",
   "The admin service could not be reached. Try again in a moment.": "Le service d'administration est injoignable. Réessayez dans un instant.",
   "The Kasho server took too long to answer. Please try again in a moment.": "Le serveur Kasho a mis trop de temps à répondre. Réessayez dans un instant.",
-  "Cannot reach the Kasho server. Check your connection and try again.": "Impossible de joindre le serveur Kasho. Vérifiez votre connexion et réessayez.",
   "Something went wrong. Please try again.": "Une erreur est survenue. Veuillez réessayer.",
   "Set up two-factor authentication": "Configurer l'authentification à deux facteurs",
   "Enter your 2FA code": "Saisissez votre code 2FA",
@@ -261,6 +259,11 @@ export const FR: Record<string, string> = {
   "Main navigation": "Navigation principale",
   "Menu": "Menu",
   "Pages of the admin site": "Pages du site d'administration",
+  // messages about the setup of the site and of the backend
+  "The backend does not have the admin tools yet. Deploy its latest version (the admin API), then try again.": "Le serveur n'a pas encore les outils d'administration. Déployez sa dernière version (l'API d'administration), puis réessayez.",
+  "The admin tools only work on the Kasho Pay admin site.": "Les outils d'administration ne fonctionnent que sur le site d'administration de Kasho Pay.",
+  "The admin site is not set up on the server yet (ADMIN_ORIGINS).": "Le site d'administration n'est pas encore configuré sur le serveur (ADMIN_ORIGINS).",
+  "This action is not available from the admin site.": "Cette action n'est pas disponible depuis le site d'administration.",
 };
 
 export const MONTHS_FR: Record<string, string> = {
@@ -268,6 +271,8 @@ export const MONTHS_FR: Record<string, string> = {
 };
 
 export const PATTERNS: [RegExp, string][] = [
+  [/^This site is not configured yet\. The build is missing: (.+)\. Add the missing build variables \(Cloudflare: Settings > Build > Variables and secrets\), then build again\.$/, "Ce site n'est pas encore configuré. Il manque au build : $1. Ajoutez les variables de build manquantes (Cloudflare : Paramètres > Compilations > Variables et secrets), puis relancez un build."],
+  [/^Cannot reach the Kasho server at (.+)\. Check your connection, then check that the backend allows this site \(ADMIN_ORIGINS\)\.$/, "Impossible de joindre le serveur Kasho sur $1. Vérifiez votre connexion, puis vérifiez que le serveur autorise ce site (ADMIN_ORIGINS)."],
   // ledger titles (the customer's transaction titles are written in English by the backend)
   [/^Top-up via (.+)$/, "Recharge via $1"],
   [/^Withdrawal to (.+)$/, "Retrait vers $1"],
