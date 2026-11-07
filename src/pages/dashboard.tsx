@@ -1,10 +1,10 @@
 // The admin console. Built for a computer first: a fixed menu on the left and a wide work area. On tablets and phones the
 // menu becomes a drawer opened from a top bar, and the tables scroll sideways inside their own box.
 import { useEffect, useState, type ComponentType } from "react";
-import { ArrowLeftRight, CreditCard, LayoutDashboard, LifeBuoy, LogOut, Menu, Percent, ScrollText, UserCog, Users } from "lucide-react";
+import { ArrowLeftRight, CreditCard, LayoutDashboard, LifeBuoy, LogOut, Menu, Percent, ScrollText, ShieldCheck, UserCog, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import type { AdminStatus } from "@/lib/api";
+import type { AdminRole, AdminStatus } from "@/lib/api";
 import { LanguageSwitch } from "@/lib/i18n";
 import { useClosingDialog } from "@/lib/layers";
 import { cn } from "@/lib/utils";
@@ -13,6 +13,7 @@ import { CardsTab } from "@/components/admin/cards";
 import { FeesTab } from "@/components/admin/fees";
 import { OverviewTab } from "@/components/admin/overview";
 import { Pill } from "@/components/admin/shared";
+import { TeamTab } from "@/components/admin/team";
 import { AuditTab, SupportTab } from "@/components/admin/support";
 import { TransactionsTab } from "@/components/admin/transactions";
 import { UsersTab } from "@/components/admin/users";
@@ -25,13 +26,16 @@ const TABS: { id: string; label: string; icon: ComponentType<{ className?: strin
   { id: "transactions", label: "Transactions", icon: ArrowLeftRight },
   { id: "support", label: "Support", icon: LifeBuoy },
   { id: "audit", label: "Audit log", icon: ScrollText },
+  { id: "team", label: "Team", icon: ShieldCheck },
   { id: "account", label: "My account", icon: UserCog },
 ];
-type TabId = "overview" | "fees" | "users" | "cards" | "transactions" | "support" | "audit" | "account";
+type TabId = "overview" | "fees" | "users" | "cards" | "transactions" | "support" | "audit" | "team" | "account";
+/** The Team page (who can sign in, add an administrator) is for super administrators only. */
+const visibleTabs = (role: AdminRole) => TABS.filter((t) => t.id !== "team" || role === "super");
 
-const fromHash = (): TabId => {
+const fromHash = (role: AdminRole): TabId => {
   const id = window.location.hash.replace(/^#/, "");
-  return (TABS.some((t) => t.id === id) ? id : "overview") as TabId;
+  return (visibleTabs(role).some((t) => t.id === id) ? id : "overview") as TabId;
 };
 
 function Brand() {
@@ -46,10 +50,10 @@ function Brand() {
   );
 }
 
-function Nav({ tab, onGo }: { tab: TabId; onGo: (id: TabId) => void }) {
+function Nav({ tab, onGo, role }: { tab: TabId; onGo: (id: TabId) => void; role: AdminRole }) {
   return (
     <nav aria-label="Main navigation" className="flex flex-col gap-1">
-      {TABS.map(({ id, label, icon: Icon }) => (
+      {visibleTabs(role).map(({ id, label, icon: Icon }) => (
         <a
           key={id}
           href={`#${id}`}
@@ -94,7 +98,7 @@ function MobileMenu({ tab, onGo, onClose, status, onSignOut }: { tab: TabId; onG
           <SheetDescription>Pages of the admin site</SheetDescription>
         </SheetHeader>
         <Brand />
-        <Nav tab={tab} onGo={(id) => { onGo(id); close(); }} />
+        <Nav tab={tab} role={status.role ?? "admin"} onGo={(id) => { onGo(id); close(); }} />
         <div className="mt-auto"><Who status={status} onSignOut={onSignOut} withLanguage={false} /></div>
       </SheetContent>
     </Sheet>
@@ -102,9 +106,9 @@ function MobileMenu({ tab, onGo, onClose, status, onSignOut }: { tab: TabId; onG
 }
 
 export function Dashboard({ status, onSignOut }: { status: AdminStatus; onSignOut: () => void }) {
-  const [tab, setTab] = useState<TabId>(fromHash);
-  const [menu, setMenu] = useState(false);
   const role = status.role ?? "admin";
+  const [tab, setTab] = useState<TabId>(() => fromHash(role));
+  const [menu, setMenu] = useState(false);
   const label = TABS.find((t) => t.id === tab)?.label ?? "";
 
   // The page is kept in the address (#fees): a refresh, the Back button and a shared link open the same page.
@@ -112,10 +116,10 @@ export function Dashboard({ status, onSignOut }: { status: AdminStatus; onSignOu
     if (window.location.hash !== `#${tab}`) window.history.replaceState(null, "", `#${tab}`);
   }, [tab]);
   useEffect(() => {
-    const onHash = () => setTab(fromHash());
+    const onHash = () => setTab(fromHash(role));
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
-  }, []);
+  }, [role]);
   // The browser tab says which page is open (useful with several tabs).
   useEffect(() => {
     document.title = `${label} | Kasho Pay Admin`;
@@ -129,7 +133,7 @@ export function Dashboard({ status, onSignOut }: { status: AdminStatus; onSignOu
       {/* Computer: fixed menu on the left */}
       <aside className="sticky top-0 hidden h-dvh flex-col gap-6 overflow-y-auto border-r border-border bg-card/40 px-4 py-6 lg:flex">
         <Brand />
-        <Nav tab={tab} onGo={go} />
+        <Nav tab={tab} role={role} onGo={go} />
         <div className="mt-auto"><Who status={status} onSignOut={onSignOut} withLanguage /></div>
       </aside>
 
@@ -145,12 +149,13 @@ export function Dashboard({ status, onSignOut }: { status: AdminStatus; onSignOu
         <h1 className="mb-6 text-2xl font-semibold tracking-tight lg:text-3xl">{label}</h1>
         <section aria-label={label}>
           {tab === "overview" && <OverviewTab />}
-          {tab === "fees" && <FeesTab />}
+          {tab === "fees" && <FeesTab role={role} />}
           {tab === "users" && <UsersTab role={role} />}
           {tab === "cards" && <CardsTab role={role} />}
           {tab === "transactions" && <TransactionsTab role={role} />}
           {tab === "support" && <SupportTab role={role} />}
           {tab === "audit" && <AuditTab />}
+          {tab === "team" && role === "super" && <TeamTab />}
           {tab === "account" && <AccountTab status={status} />}
         </section>
       </main>

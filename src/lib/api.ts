@@ -181,3 +181,13 @@ export type AdminSupportMessage = { id: string; user_id: string; email: string |
 export const adminListSupport = () => call<{ disputes: AdminDispute[]; messages: AdminSupportMessage[] }>("adminListSupport", {});
 export type AdminAuditRow = { id: string; admin_email: string | null; action: string; target_user: string | null; target: string | null; details: Record<string, unknown>; ip: string | null; created_at: string };
 export const adminListAudit = (a: Arg<{ page: number; pageSize?: number | undefined }>) => call<{ total: number; page: number; pageSize: number; items: AdminAuditRow[] }>("adminListAudit", a.data);
+
+// ---------------------------------------------------------------- exchange rate and administrators (super administrator, see backend src/admin.ts)
+export type AdminRate = { rate: number; source: "admin" | "environment"; envRate: number; min: number; max: number; updatedAt: string | null; updatedBy: string | null };
+export const adminGetRate = () => call<AdminRate>("adminGetRate", {});
+export const adminSetRate = (a: Arg<{ rate: number; confirmPassword: string }>) => call<AdminRate>("adminSetRate", a.data);
+
+export type AdminMember = { userId: string; email: string; name: string; role: AdminRole; createdAt: string; lastSignInAt: string | null; has2fa: boolean; you: boolean };
+export const adminListAdmins = () => call<{ items: AdminMember[] }>("adminListAdmins", {});
+export const adminCreateAdmin = (a: Arg<{ email: string; password: string; role: AdminRole; firstName?: string | undefined; lastName?: string | undefined; confirmPassword: string }>) =>
+  call<{ userId: string; email: string; role: AdminRole }>("adminCreateAdmin", a.data);

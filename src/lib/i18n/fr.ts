@@ -3,6 +3,22 @@
 // Open the site with ?i18n-debug=1 to list untranslated strings in the console.
 
 export const FR: Record<string, string> = {
+  // team and exchange rate
+  "Team": "Équipe", "Administrators": "Administrateurs", "Person": "Personne", "Added": "Ajouté le", "(you)": "(vous)", "Not yet": "Pas encore", "Done": "Terminé",
+  "The people who can sign in to this site. Everyone must set up 2FA at their first sign-in. A super administrator can also move customer money, change prices and the exchange rate, and add people here.": "Les personnes qui peuvent se connecter à ce site. Chacune doit activer la 2FA à sa première connexion. Un super administrateur peut aussi déplacer l'argent des clients, changer les prix et le taux de change, et ajouter des personnes ici.",
+  "Add an administrator": "Ajouter un administrateur", "No administrators yet.": "Aucun administrateur pour l'instant.",
+  "Administrator created": "Administrateur créé",
+  "Give these details to the person in a safe way. This password is shown only now. They will be asked to set up 2FA at their first sign-in and should change the password in My account.": "Transmettez ces informations à la personne de façon sûre. Ce mot de passe n'est affiché que maintenant. Elle devra activer la 2FA à sa première connexion et changer le mot de passe dans Mon compte.",
+  "Temporary password": "Mot de passe temporaire", "Temporary password (at least 12 characters)": "Mot de passe temporaire (12 caractères minimum)", "Generate": "Générer",
+  "Creates an account that can sign in to this site. Choose the role carefully: a super administrator can move customer money.": "Crée un compte qui peut se connecter à ce site. Choisissez bien le rôle : un super administrateur peut déplacer l'argent des clients.",
+  "First name": "Prénom", "Last name": "Nom de famille",
+  "Administrator (read everything, edit fees)": "Administrateur (lit tout, modifie les frais)", "Super administrator (everything)": "Super administrateur (tout)",
+  "Create administrator": "Créer l'administrateur",
+  "Exchange rate": "Taux de change", "Change the rate": "Changer le taux", "Change the exchange rate": "Changer le taux de change", "Save the rate": "Enregistrer le taux", "Exchange rate saved": "Taux de change enregistré",
+  "Gourdes for 1 US dollar. It prices every top-up and withdrawal, for all customers, from the next operation on. Operations already started keep their rate.": "Gourdes pour 1 dollar américain. Il fixe le prix de chaque recharge et de chaque retrait, pour tous les clients, dès la prochaine opération. Les opérations déjà commencées gardent leur taux.",
+  "Gourdes for 1 US dollar": "Gourdes pour 1 dollar américain",
+  "Default rate from the server settings. Nobody has changed it here yet.": "Taux par défaut des réglages du serveur. Personne ne l'a encore changé ici.",
+  "Only a super administrator can change it.": "Seul un super administrateur peut le changer.",
   // header and tabs
   "Overview": "Vue d'ensemble",
   "Fees": "Frais",
@@ -223,6 +239,11 @@ export const MONTHS_FR: Record<string, string> = {
 };
 
 export const PATTERNS: [RegExp, string][] = [
+  [/^1 USD = ([\d.]+) HTG$/, "1 USD = $1 HTG"],
+  [/^Set by an administrator( \(.+\))? on (.+)\.$/, "Défini par un administrateur$1 le $2."],
+  [/^Now 1 USD = ([\d.]+) HTG\. Customers pay and receive at the new rate from the next operation\. Allowed: (\d+) to (\d+)\.$/, "Actuellement 1 USD = $1 HTG. Les clients paient et reçoivent au nouveau taux dès la prochaine opération. Autorisé : $2 à $3."],
+  [/^Enter a rate between (\d+) and (\d+)\.$/, "Saisissez un taux entre $1 et $2."],
+
   [/^This site is not configured yet\. The build is missing: (.+)\. Add the missing build variables \(Cloudflare: Settings > Build > Variables and secrets\), then build again\.$/, "Ce site n'est pas encore configuré. Il manque au build : $1. Ajoutez les variables de build manquantes (Cloudflare : Paramètres > Compilations > Variables et secrets), puis relancez un build."],
   [/^Cannot reach the Kasho server at (.+)\. Check your connection, then check that the backend allows this site: ADMIN_ORIGINS must contain (.+)$/, "Impossible de joindre le serveur Kasho sur $1. Vérifiez votre connexion, puis vérifiez que le serveur autorise ce site : ADMIN_ORIGINS doit contenir $2"],
   // ledger titles (the customer's transaction titles are written in English by the backend)

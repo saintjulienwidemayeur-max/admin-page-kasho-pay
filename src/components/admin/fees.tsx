@@ -10,18 +10,24 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { adminDeleteFee, adminListFees, adminSaveFee, type AdminFeeRule, type FeeOperation } from "@/lib/api";
+import { adminDeleteFee, adminListFees, adminSaveFee, type AdminFeeRule, type AdminRole, type FeeOperation } from "@/lib/api";
+import { RateCard } from "./rate";
 import { errorMessage } from "@/lib/format";
 import { useClosingDialog } from "@/lib/layers";
 import { Empty, ErrorBox, FEE_OPERATION_LABELS, Loading, PasswordConfirm, Pill, Section, money, passwordError } from "./shared";
 
 const OPS: FeeOperation[] = ["wallet_deposit", "wallet_withdrawal", "card_creation", "card_fund", "card_withdraw", "transfer"];
 
-export function FeesTab() {
+export function FeesTab({ role }: { role: AdminRole }) {
   const fees = useQuery({ queryKey: ["admin", "fees"], queryFn: adminListFees });
   if (fees.isPending) return <Loading />;
   if (fees.isError) return <ErrorBox error={fees.error} onRetry={() => void fees.refetch()} />;
-  return <CustomerFees rules={fees.data.rules} tiered={fees.data.tiered} />;
+  return (
+    <div className="space-y-6">
+      <RateCard role={role} />
+      <CustomerFees rules={fees.data.rules} tiered={fees.data.tiered} />
+    </div>
+  );
 }
 
 const describeFee = (r: AdminFeeRule) => (r.feeType === "percent" ? `${r.feeValue}%` : money(r.feeValue));
