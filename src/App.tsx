@@ -8,7 +8,6 @@ import { useIdleTimeout } from "@/lib/idle";
 import { useUnstickBody } from "@/lib/layers";
 import { AuthShell } from "@/pages/auth-shell";
 import { LoginPage } from "@/pages/login";
-import { MfaPage } from "@/pages/mfa";
 
 // The dashboard (and the charts library) is only downloaded once an administrator is in: the login screen stays light.
 const Dashboard = lazy(() => import("@/pages/dashboard").then((m) => ({ default: m.Dashboard })));
@@ -61,9 +60,6 @@ export default function App() {
       break;
     case "signed-out":
       screen = <LoginPage notice={notice} />;
-      break;
-    case "mfa":
-      screen = <MfaPage key={gate.mode} mode={gate.mode} email={gate.status.email} onVerified={() => void recheck()} onSignOut={leave} />;
       break;
     case "ready":
       screen = (

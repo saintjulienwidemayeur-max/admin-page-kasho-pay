@@ -30,14 +30,14 @@ export function TeamTab() {
   return (
     <Section
       title="Administrators"
-      description="The people who can sign in to this site. Everyone must set up 2FA at their first sign-in. A super administrator can also move customer money, change prices and the exchange rate, and add people here."
+      description="The people who can sign in to this site. Everyone signs in with e-mail and password. A super administrator can also move customer money, change prices and the exchange rate, and add people here."
       action={<Button size="sm" onClick={() => setAdding(true)}><Plus className="h-4 w-4" /> Add an administrator</Button>}
     >
       {items.length === 0 ? <Empty>No administrators yet.</Empty> : (
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[640px] text-sm">
+          <table className="w-full min-w-[560px] text-sm">
             <thead><tr className="border-b border-border text-left text-xs text-muted-foreground">
-              <th className="px-3 py-2 font-medium">Person</th><th className="px-3 py-2 font-medium">Role</th><th className="px-3 py-2 font-medium">2FA</th><th className="px-3 py-2 font-medium">Last sign-in</th><th className="px-3 py-2 font-medium">Added</th>
+              <th className="px-3 py-2 font-medium">Person</th><th className="px-3 py-2 font-medium">Role</th><th className="px-3 py-2 font-medium">Last sign-in</th><th className="px-3 py-2 font-medium">Added</th>
             </tr></thead>
             <tbody className="divide-y divide-border">
               {items.map((m) => (
@@ -47,7 +47,6 @@ export function TeamTab() {
                     {m.name && <p data-no-i18n className="text-xs text-muted-foreground">{m.email}</p>}
                   </td>
                   <td className="px-3 py-2.5">{m.role === "super" ? <Pill tone="good">Super administrator</Pill> : <Pill>Administrator</Pill>}</td>
-                  <td className="px-3 py-2.5">{m.has2fa ? <Pill tone="good">On</Pill> : <Pill tone="warn">Not yet</Pill>}</td>
                   <td className="px-3 py-2.5 text-muted-foreground">{when(m.lastSignInAt)}</td>
                   <td className="px-3 py-2.5 text-muted-foreground">{when(m.createdAt)}</td>
                 </tr>
@@ -96,7 +95,7 @@ function AddAdminDialog({ onClose }: { onClose: () => void }) {
           <div className="space-y-4">
             <DialogHeader>
               <DialogTitle>Administrator created</DialogTitle>
-              <DialogDescription>Give these details to the person in a safe way. This password is shown only now. They will be asked to set up 2FA at their first sign-in and should change the password in My account.</DialogDescription>
+              <DialogDescription>Give these details to the person in a safe way. This password is shown only now. They should change the password in My account after their first sign-in.</DialogDescription>
             </DialogHeader>
             <dl className="space-y-2 rounded-xl border border-border bg-secondary/40 p-4 text-sm">
               <div><dt className="text-xs text-muted-foreground">E-mail</dt><dd data-no-i18n className="break-all font-medium">{done.email}</dd></div>

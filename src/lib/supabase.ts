@@ -31,7 +31,7 @@ function supabaseFetch(apiKey: string): typeof fetch {
   };
 }
 
-// The session is kept in sessionStorage: closing the tab or the browser signs the administrator out (login + 2FA again).
+// The session is kept in sessionStorage: closing the tab or the browser signs the administrator out (login again).
 function sessionStore(): Pick<Storage, "getItem" | "setItem" | "removeItem"> {
   try {
     const s = window.sessionStorage;

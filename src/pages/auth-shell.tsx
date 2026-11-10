@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { LanguageSwitch } from "@/lib/i18n";
 
-/** Centered card used by the login, 2FA and error screens. */
+/** Centered card used by the login and error screens. */
 export function AuthShell({ title, subtitle, children }: { title: string; subtitle?: string; children: ReactNode }) {
   return (
     <main className="relative grid min-h-dvh place-items-center px-4 py-10">

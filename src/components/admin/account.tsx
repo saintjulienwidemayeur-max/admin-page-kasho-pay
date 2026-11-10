@@ -1,13 +1,13 @@
-// Admin > Account: who is signed in, 2FA status, change password.
+// Admin > Account: who is signed in, change password.
 import { useState } from "react";
-import { KeyRound, ShieldAlert, ShieldCheck } from "lucide-react";
+import { KeyRound } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { changePassword, type AdminStatus } from "@/lib/api";
 import { errorMessage } from "@/lib/format";
-import { PasswordConfirm, Pill, Section, Stat, passwordError } from "./shared";
+import { PasswordConfirm, Section, Stat, passwordError } from "./shared";
 
 export function AccountTab({ status }: { status: AdminStatus }) {
   const [current, setCurrent] = useState("");
@@ -38,13 +38,6 @@ export function AccountTab({ status }: { status: AdminStatus }) {
         <div className="grid gap-3 sm:grid-cols-2">
           <Stat label="Signed in as" value={<span className="text-base">{status.email}</span>} />
           <Stat label="Role" value={<span className="text-base">{status.role === "super" ? "Super administrator" : "Administrator"}</span>} sub={status.role === "super" ? "Full access, including customer money" : "Read access and the customer fee schedule"} />
-        </div>
-        <div className="mt-4 flex items-start gap-3 rounded-xl border border-border p-4 text-sm">
-          {status.hasTotp ? <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-primary" /> : <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-warning" />}
-          <div className="min-w-0">
-            <p className="font-medium">Two-factor authentication {status.hasTotp ? <Pill tone="good">On</Pill> : <Pill tone="warn">Off</Pill>}</p>
-            <p className="mt-1 text-muted-foreground">This site only works with 2FA, because the tools can move money. You are asked for your authenticator code each time you sign in.</p>
-          </div>
         </div>
       </Section>
 

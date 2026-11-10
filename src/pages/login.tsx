@@ -19,7 +19,7 @@ export function LoginPage({ notice }: { notice: string | null }) {
     const { error: err } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
     setBusy(false);
     if (err) setError(/banned/i.test(err.message) ? "This account is suspended." : "Wrong email or password.");
-    // On success the gate (onAuthStateChange) takes over: 2FA screen or dashboard.
+    // On success the gate (onAuthStateChange) takes over: dashboard.
   };
 
   return (

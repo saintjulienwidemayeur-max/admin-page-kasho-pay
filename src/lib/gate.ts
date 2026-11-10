@@ -1,8 +1,8 @@
-// Who may see the site: signed in, an administrator (backend `admins` table), and past the 2FA code.
+// Who may see the site: signed in and an administrator (backend `admins` table). There is no 2FA step.
 // The backend is the judge (adminStatus); this hook only follows what it says and shows the right screen.
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
-import { adminStatus, setMfaRequiredHandler, setSessionEndedHandler, type AdminStatus } from "@/lib/api";
+import { adminStatus, setSessionEndedHandler, type AdminStatus } from "@/lib/api";
 import { errorMessage } from "@/lib/format";
 import { configError, supabase } from "@/lib/supabase";
 
@@ -11,7 +11,6 @@ export type Gate =
   | { step: "config"; message: string }
   | { step: "signed-out" }
   | { step: "error"; message: string }
-  | { step: "mfa"; mode: "enroll" | "challenge"; status: AdminStatus }
   | { step: "ready"; status: AdminStatus };
 
 export function useAdminGate() {
@@ -38,13 +37,8 @@ export function useAdminGate() {
         await supabase.auth.signOut();
         return;
       }
-      if (status.mfaOk) {
-        readyFor.current = session.user.id;
-        setGate({ step: "ready", status });
-      } else {
-        readyFor.current = null;
-        setGate({ step: "mfa", mode: status.hasTotp ? "challenge" : "enroll", status });
-      }
+      readyFor.current = session.user.id;
+      setGate({ step: "ready", status });
     } catch (e) {
       if (id !== run.current) return;
       readyFor.current = null;
@@ -61,13 +55,10 @@ export function useAdminGate() {
       // Never await Supabase calls inside this callback (it can deadlock the client): continue on the next tick.
       setTimeout(() => void evaluate(session), 0);
     });
-    // The backend says this session has not passed 2FA (for example after the token was renewed): ask for the code again.
-    setMfaRequiredHandler(() => void supabase.auth.getSession().then(({ data: s }) => evaluate(s.session)));
     // The session really ended (the backend and Supabase both refuse it): say so on the login screen.
     setSessionEndedHandler((message) => setNotice(message));
     return () => {
       data.subscription.unsubscribe();
-      setMfaRequiredHandler(null);
       setSessionEndedHandler(null);
     };
   }, [evaluate]);

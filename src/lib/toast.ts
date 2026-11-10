@@ -3,7 +3,7 @@ import { toast } from "sonner";
 // App-wide toast behaviour, applied once to the shared `toast` function:
 //  - the same message shown twice is one toast (id = kind + text), so repeated taps do not stack copies;
 //  - errors and successes disappear faster than sonner's 4 s default;
-//  - a cancelled action (user closed a 2FA / password prompt) never shows anything;
+//  - a cancelled action (user closed a password prompt) never shows anything;
 //  - dismissStaleToasts() clears toasts left over from the previous screen on navigation.
 const shownAt = new Map<string | number, number>();
 const DURATION: Record<string, number> = { error: 3000, success: 2500, warning: 3500 };

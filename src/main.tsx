@@ -11,7 +11,7 @@ document.documentElement.lang = getLang();
 // Never a black page: if everything disappears anyway, plain text with a way out replaces it.
 installRescue(document.getElementById("root")!);
 
-// No <StrictMode>: the 2FA setup creates a factor on mount, and a development double mount would create two.
+// No <StrictMode>: a development double mount would run every effect twice.
 createRoot(document.getElementById("root")!).render(
   <>
     <AppErrorBoundary>

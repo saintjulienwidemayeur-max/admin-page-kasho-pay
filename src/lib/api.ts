@@ -1,9 +1,9 @@
 // Client for the Kasho Pay backend (kasho-pay-backend). Every call sends the Supabase access token; the backend
-// verifies it, checks the `admins` table and the 2FA level, and refuses requests that do not come from this site.
+// verifies it, checks the `admins` table, and refuses requests that do not come from this site.
 import { isAuthRetryableFetchError } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 
-/** Error from the Kasho backend. `code` is the machine-readable reason (MFA_REQUIRED, PASSWORD_INVALID...). */
+/** Error from the Kasho backend. `code` is the machine-readable reason (PASSWORD_INVALID, PASSWORD_REQUIRED...). */
 export class ApiError extends Error {
   code: string | undefined;
   status: number;
@@ -22,10 +22,6 @@ function apiUrl(): string {
   const env = import.meta.env.VITE_API_URL;
   return (env ?? "http://localhost:4000").replace(/\/+$/, "");
 }
-
-// The login gate registers here so a "2FA required" answer from the backend sends the administrator back to the code screen.
-let onMfaRequired: (() => void) | null = null;
-export const setMfaRequiredHandler = (fn: (() => void) | null) => { onMfaRequired = fn; };
 
 // The gate registers here to tell the login screen why the session ended.
 let onSessionEnded: ((message: string) => void) | null = null;
@@ -78,7 +74,6 @@ async function call<T>(name: string, body: unknown = {}): Promise<T> {
   }
   if (!res.ok) {
     const code: string | undefined = typeof json?.error?.code === "string" ? json.error.code : undefined;
-    if (res.status === 403 && code === "MFA_REQUIRED") onMfaRequired?.();
     if (res.status === 401) await endSessionIfInvalid(json?.error?.message);
     // A backend that was not updated yet does not know the admin endpoints.
     if (res.status === 404 && json?.error?.message === "Unknown endpoint.") {
@@ -100,7 +95,7 @@ export type FeeRule = {
   feeValue: number;
 };
 
-// Needs the current password (and the 2FA code): ask for it with useStepUp().ask(...).
+// Needs the current password.
 export const changePassword = (a: Arg<{ currentPassword: string; newPassword: string }>) => call<{ ok: boolean }>("changePassword", a.data);
 
 // ---------------------------------------------------------------- admin site (see backend src/admin.ts)
@@ -187,7 +182,7 @@ export type AdminRate = { rate: number; source: "admin" | "environment"; envRate
 export const adminGetRate = () => call<AdminRate>("adminGetRate", {});
 export const adminSetRate = (a: Arg<{ rate: number; confirmPassword: string }>) => call<AdminRate>("adminSetRate", a.data);
 
-export type AdminMember = { userId: string; email: string; name: string; role: AdminRole; createdAt: string; lastSignInAt: string | null; has2fa: boolean; you: boolean };
+export type AdminMember = { userId: string; email: string; name: string; role: AdminRole; createdAt: string; lastSignInAt: string | null; you: boolean };
 export const adminListAdmins = () => call<{ items: AdminMember[] }>("adminListAdmins", {});
 export const adminCreateAdmin = (a: Arg<{ email: string; password: string; role: AdminRole; firstName?: string | undefined; lastName?: string | undefined; confirmPassword: string }>) =>
   call<{ userId: string; email: string; role: AdminRole }>("adminCreateAdmin", a.data);
