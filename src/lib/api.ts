@@ -171,9 +171,11 @@ export const adminGetCard = (a: Arg<{ cardId: string }>) => call<AdminCardDetail
 export type AdminTxRow = AdminTx & { userId: string; customer: string; kashoId: string | null; providerRef: string | null };
 export const adminListTransactions = (a: Arg<{ q?: string | undefined; kind?: string | undefined; status?: "pending" | "completed" | "failed" | undefined; userId?: string | undefined; page: number; pageSize?: number | undefined }>) =>
   call<{ total: number; page: number; pageSize: number; items: AdminTxRow[] }>("adminListTransactions", a.data);
-export type AdminDispute = { id: string; user_id: string; transaction_ref: string; title: string; amount: number; reason: string; note: string; reference: string; created_at: string; customer: string };
-export type AdminSupportMessage = { id: string; user_id: string; email: string | null; message: string; created_at: string; customer: string };
+export type AdminDispute = { id: string; user_id: string; transaction_ref: string; title: string; amount: number; reason: string; note: string; reference: string; created_at: string; customer: string; reply?: string | null; replied_at?: string | null };
+export type AdminSupportMessage = { id: string; user_id: string; email: string | null; message: string; created_at: string; customer: string; reply?: string | null; replied_at?: string | null };
 export const adminListSupport = () => call<{ disputes: AdminDispute[]; messages: AdminSupportMessage[] }>("adminListSupport", {});
+/** Answers a help message or a dispute: the reply is saved and the customer is notified in the app. */
+export const adminReplySupport = (a: Arg<{ kind: "message" | "dispute"; id: string; reply: string }>) => call<{ ok: true; repliedAt: string }>("adminReplySupport", a.data);
 export type AdminAuditRow = { id: string; admin_email: string | null; action: string; target_user: string | null; target: string | null; details: Record<string, unknown>; ip: string | null; created_at: string };
 export const adminListAudit = (a: Arg<{ page: number; pageSize?: number | undefined }>) => call<{ total: number; page: number; pageSize: number; items: AdminAuditRow[] }>("adminListAudit", a.data);
 

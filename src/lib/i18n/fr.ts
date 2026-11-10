@@ -3,6 +3,9 @@
 // Open the site with ?i18n-debug=1 to list untranslated strings in the console.
 
 export const FR: Record<string, string> = {
+  // support replies
+  "Reply": "Répondre", "Reply again": "Répondre à nouveau", "Your reply": "Votre réponse", "Send reply": "Envoyer la réponse", "Reply sent": "Réponse envoyée", "the customer": "le client",
+  "The customer gets your answer as a notification in the app (and a push on their phone if they turned it on). Write in the language they used.": "Le client reçoit votre réponse sous forme de notification dans l'application (et une notification push sur son téléphone s'il l'a activée). Écrivez dans la langue qu'il a utilisée.",
   // team and exchange rate
   "Team": "Équipe", "Administrators": "Administrateurs", "Person": "Personne", "Added": "Ajouté le", "(you)": "(vous)", "Not yet": "Pas encore", "Done": "Terminé",
   "The people who can sign in to this site. Everyone must set up 2FA at their first sign-in. A super administrator can also move customer money, change prices and the exchange rate, and add people here.": "Les personnes qui peuvent se connecter à ce site. Chacune doit activer la 2FA à sa première connexion. Un super administrateur peut aussi déplacer l'argent des clients, changer les prix et le taux de change, et ajouter des personnes ici.",
@@ -239,6 +242,9 @@ export const MONTHS_FR: Record<string, string> = {
 };
 
 export const PATTERNS: [RegExp, string][] = [
+  [/^Reply to (.+)$/, "Répondre à $1"],
+  [/^Your reply · (.+)$/, "Votre réponse · $1"],
+  [/^(\d+) \/ 2000$/, "$1 / 2000"],
   [/^1 USD = ([\d.]+) HTG$/, "1 USD = $1 HTG"],
   [/^Set by an administrator( \(.+\))? on (.+)\.$/, "Défini par un administrateur$1 le $2."],
   [/^Now 1 USD = ([\d.]+) HTG\. Customers pay and receive at the new rate from the next operation\. Allowed: (\d+) to (\d+)\.$/, "Actuellement 1 USD = $1 HTG. Les clients paient et reçoivent au nouveau taux dès la prochaine opération. Autorisé : $2 à $3."],

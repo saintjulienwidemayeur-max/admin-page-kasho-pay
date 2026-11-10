@@ -1,13 +1,22 @@
 // Admin > Support (disputes and messages from customers) and Audit (what administrators did).
 import { useState, type ReactNode } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { adminListAudit, adminListSupport, type AdminRole, type FeeOperation } from "@/lib/api";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Loader2, MessageSquareReply } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { adminListAudit, adminListSupport, adminReplySupport, type AdminRole, type FeeOperation } from "@/lib/api";
+import { errorMessage } from "@/lib/format";
+import { useClosingDialog } from "@/lib/layers";
 import { Empty, ErrorBox, FEE_OPERATION_LABELS, Loading, Pager, Pill, Section, money, when } from "./shared";
 import { UserSheet } from "./users";
 
 export function SupportTab({ role }: { role: AdminRole }) {
   const query = useQuery({ queryKey: ["admin", "support"], queryFn: adminListSupport });
   const [user, setUser] = useState<string | null>(null);
+  const [replying, setReplying] = useState<Reply | null>(null);
   if (query.isPending) return <Loading />;
   if (query.isError) return <ErrorBox error={query.error} onRetry={() => void query.refetch()} />;
   const { disputes, messages } = query.data;
@@ -24,6 +33,7 @@ export function SupportTab({ role }: { role: AdminRole }) {
                   <p className="text-xs text-muted-foreground"><button type="button" className="text-primary hover:underline" onClick={() => setUser(d.user_id)}>{d.customer || "Customer"}</button> · {when(d.created_at)} · {d.transaction_ref}</p>
                 </div>
                 <p className="font-semibold tabular-nums sm:text-right">{money(d.amount)}</p>
+                <ReplyLine reply={d.reply} repliedAt={d.replied_at} onReply={() => setReplying({ kind: "dispute", id: d.id, customer: d.customer, original: `${d.title || d.transaction_ref}: ${d.reason}${d.note ? `: ${d.note}` : ""}`, previous: d.reply ?? "" })} />
               </li>
             ))}
           </ul>
@@ -36,13 +46,72 @@ export function SupportTab({ role }: { role: AdminRole }) {
               <li key={m.id} className="py-3 text-sm">
                 <p className="whitespace-pre-wrap break-words">{m.message}</p>
                 <p className="mt-1 text-xs text-muted-foreground"><button type="button" className="text-primary hover:underline" onClick={() => setUser(m.user_id)}>{m.customer || "Customer"}</button>{m.email ? ` · ${m.email}` : ""} · {when(m.created_at)}</p>
+                <ReplyLine reply={m.reply} repliedAt={m.replied_at} onReply={() => setReplying({ kind: "message", id: m.id, customer: m.customer, original: m.message, previous: m.reply ?? "" })} />
               </li>
             ))}
           </ul>
         )}
       </Section>
       {user && <UserSheet key={user} userId={user} role={role} onClose={() => setUser(null)} />}
+      {replying && <ReplyDialog key={replying.id} target={replying} onClose={() => setReplying(null)} />}
     </div>
+  );
+}
+
+type Reply = { kind: "message" | "dispute"; id: string; customer: string; original: string; previous: string };
+
+/** Under a message or dispute: the answer already sent (if any) and the button to answer. */
+function ReplyLine({ reply, repliedAt, onReply }: { reply: string | null | undefined; repliedAt: string | null | undefined; onReply: () => void }) {
+  return (
+    <div className="mt-2 sm:col-span-2">
+      {reply && (
+        <div className="mb-2 rounded-xl border border-border bg-secondary/40 px-3 py-2 text-sm">
+          <p className="text-xs text-muted-foreground">{`Your reply · ${when(repliedAt)}`}</p>
+          <p className="mt-0.5 whitespace-pre-wrap break-words">{reply}</p>
+        </div>
+      )}
+      <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={onReply}><MessageSquareReply className="h-3.5 w-3.5" /> {reply ? "Reply again" : "Reply"}</Button>
+    </div>
+  );
+}
+
+function ReplyDialog({ target, onClose }: { target: Reply; onClose: () => void }) {
+  const qc = useQueryClient();
+  const { open, close } = useClosingDialog(onClose);
+  const [text, setText] = useState(target.previous);
+  const [busy, setBusy] = useState(false);
+  const valid = text.trim().length >= 2;
+
+  const send = async () => {
+    setBusy(true);
+    try {
+      await adminReplySupport({ data: { kind: target.kind, id: target.id, reply: text.trim() } });
+      toast.success("Reply sent");
+      void qc.invalidateQueries({ queryKey: ["admin", "support"] });
+      close();
+    } catch (e) {
+      toast.error(errorMessage(e));
+    } finally { setBusy(false); }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => { if (!o && !busy) close(); }}>
+      <DialogContent className="rounded-2xl">
+        <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); if (valid && !busy) void send(); }}>
+          <DialogHeader>
+            <DialogTitle>{`Reply to ${target.customer || "the customer"}`}</DialogTitle>
+            <DialogDescription>The customer gets your answer as a notification in the app (and a push on their phone if they turned it on). Write in the language they used.</DialogDescription>
+          </DialogHeader>
+          <div className="max-h-32 overflow-y-auto whitespace-pre-wrap break-words rounded-xl border border-border bg-secondary/40 px-3 py-2 text-sm text-muted-foreground">{target.original}</div>
+          <div className="space-y-2">
+            <Label htmlFor="support-reply">Your reply</Label>
+            <Textarea id="support-reply" rows={5} maxLength={2000} className="rounded-xl" value={text} onChange={(e) => setText(e.target.value)} />
+            <p className="text-right text-xs text-muted-foreground">{`${text.length} / 2000`}</p>
+          </div>
+          <DialogFooter><Button type="submit" className="w-full rounded-xl" disabled={!valid || busy}>{busy && <Loader2 className="h-4 w-4 animate-spin" />} Send reply</Button></DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 
