@@ -3,6 +3,13 @@
 // Open the site with ?i18n-debug=1 to list untranslated strings in the console.
 
 export const FR: Record<string, string> = {
+  // card holders (new card program)
+  "Card holders": "Titulaires de cartes", "Card holders (new card program)": "Titulaires de cartes (nouveau programme)",
+  "Never sent": "Jamais envoyé", "Profile incomplete": "Profil incomplet", "Sent, waiting": "Envoyé, en attente", "Refused": "Refusé",
+  "Freda holder": "Titulaire Freda", "Sent": "Envoyé", "Last try": "Dernier essai", "Nobody here.": "Personne ici.",
+  "Send now": "Envoyer maintenant", "Restart": "Relancer",
+  "\"Send now\" makes a new holder at Freda with a slightly different e-mail. \"Restart\" starts the verification of the holder the customer already has. Freda allows 5 verifications per customer per 24 hours.": "« Envoyer maintenant » crée un nouveau titulaire chez Freda avec un e-mail légèrement différent. « Relancer » redémarre la vérification du titulaire que le client a déjà. Freda autorise 5 vérifications par client par 24 heures.",
+  "Freda did not accept it.": "Freda ne l'a pas accepté.",
   // support replies
   "Reply": "Répondre", "Reply again": "Répondre à nouveau", "Your reply": "Votre réponse", "Send reply": "Envoyer la réponse", "Reply sent": "Réponse envoyée", "the customer": "le client",
   "The customer gets your answer as a notification in the app (and a push on their phone if they turned it on). Write in the language they used.": "Le client reçoit votre réponse sous forme de notification dans l'application (et une notification push sur son téléphone s'il l'a activée). Écrivez dans la langue qu'il a utilisée.",
@@ -242,6 +249,8 @@ export const MONTHS_FR: Record<string, string> = {
 };
 
 export const PATTERNS: [RegExp, string][] = [
+  [/^Sent to Freda: (.*)$/, "Envoyé à Freda : $1"],
+  [/^Customers with a verified identity \((\d+)\) and where their card holder is at Freda \((Live|Sandbox)\)\. "Verified" comes from Freda's holder\.verified message: only then can the customer create a card\. A customer shown "Never sent" was not sent to Freda yet\.$/, "Clients dont l'identité est vérifiée ($1) et où en est leur titulaire chez Freda ($2). « Vérifié » vient du message holder.verified de Freda : le client ne peut créer une carte qu'à ce moment. Un client « Jamais envoyé » n'a pas encore été envoyé à Freda."],
   [/^Reply to (.+)$/, "Répondre à $1"],
   [/^Your reply · (.+)$/, "Votre réponse · $1"],
   [/^(\d+) \/ 2000$/, "$1 / 2000"],

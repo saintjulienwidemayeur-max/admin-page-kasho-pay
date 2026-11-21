@@ -184,6 +184,16 @@ export type AdminRate = { rate: number; source: "admin" | "environment"; envRate
 export const adminGetRate = () => call<AdminRate>("adminGetRate", {});
 export const adminSetRate = (a: Arg<{ rate: number; confirmPassword: string }>) => call<AdminRate>("adminSetRate", a.data);
 
+/** A customer with a verified KYC and where their card holder is at Freda (new card program). */
+export type AdminHolderRow = {
+  userId: string; name: string; holderId: string | null; email: string | null;
+  status: "none" | "needs_profile" | "submitted" | "verified" | "failed"; reason: string | null;
+  sentAt: string | null; lastAttemptAt: string | null; checkedAt: string | null;
+};
+export const adminListHolders = () => call<{ mode: string; total: number; counts: Record<string, number>; items: AdminHolderRow[] }>("adminListHolders", {});
+export const adminSendHolder = (a: Arg<{ userId: string; how: "new" | "restart" }>) =>
+  call<{ state: string; reason: string | null; holderId: string | null }>("adminSendHolder", a.data);
+
 export type AdminMember = { userId: string; email: string; name: string; role: AdminRole; createdAt: string; lastSignInAt: string | null; you: boolean };
 export const adminListAdmins = () => call<{ items: AdminMember[] }>("adminListAdmins", {});
 export const adminCreateAdmin = (a: Arg<{ email: string; password: string; role: AdminRole; firstName?: string | undefined; lastName?: string | undefined; confirmPassword: string }>) =>

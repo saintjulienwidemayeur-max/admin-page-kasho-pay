@@ -1,7 +1,7 @@
 // The admin console. Built for a computer first: a fixed menu on the left and a wide work area. On tablets and phones the
 // menu becomes a drawer opened from a top bar, and the tables scroll sideways inside their own box.
 import { useEffect, useState, type ComponentType } from "react";
-import { ArrowLeftRight, CreditCard, LayoutDashboard, LifeBuoy, LogOut, Menu, Percent, ScrollText, ShieldCheck, UserCog, Users } from "lucide-react";
+import { ArrowLeftRight, CreditCard, IdCard, LayoutDashboard, LifeBuoy, LogOut, Menu, Percent, ScrollText, ShieldCheck, UserCog, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import type { AdminRole, AdminStatus } from "@/lib/api";
@@ -10,6 +10,7 @@ import { useClosingDialog } from "@/lib/layers";
 import { cn } from "@/lib/utils";
 import { AccountTab } from "@/components/admin/account";
 import { CardsTab } from "@/components/admin/cards";
+import { HoldersTab } from "@/components/admin/holders";
 import { FeesTab } from "@/components/admin/fees";
 import { OverviewTab } from "@/components/admin/overview";
 import { Pill } from "@/components/admin/shared";
@@ -23,13 +24,14 @@ const TABS: { id: string; label: string; icon: ComponentType<{ className?: strin
   { id: "fees", label: "Fees", icon: Percent },
   { id: "users", label: "Customers", icon: Users },
   { id: "cards", label: "Cards", icon: CreditCard },
+  { id: "holders", label: "Card holders", icon: IdCard },
   { id: "transactions", label: "Transactions", icon: ArrowLeftRight },
   { id: "support", label: "Support", icon: LifeBuoy },
   { id: "audit", label: "Audit log", icon: ScrollText },
   { id: "team", label: "Team", icon: ShieldCheck },
   { id: "account", label: "My account", icon: UserCog },
 ];
-type TabId = "overview" | "fees" | "users" | "cards" | "transactions" | "support" | "audit" | "team" | "account";
+type TabId = "overview" | "fees" | "users" | "cards" | "holders" | "transactions" | "support" | "audit" | "team" | "account";
 /** The Team page (who can sign in, add an administrator) is for super administrators only. */
 const visibleTabs = (role: AdminRole) => TABS.filter((t) => t.id !== "team" || role === "super");
 
@@ -152,6 +154,7 @@ export function Dashboard({ status, onSignOut }: { status: AdminStatus; onSignOu
           {tab === "fees" && <FeesTab role={role} />}
           {tab === "users" && <UsersTab role={role} />}
           {tab === "cards" && <CardsTab role={role} />}
+          {tab === "holders" && <HoldersTab role={role} />}
           {tab === "transactions" && <TransactionsTab role={role} />}
           {tab === "support" && <SupportTab role={role} />}
           {tab === "audit" && <AuditTab />}
