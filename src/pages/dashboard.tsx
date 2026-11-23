@@ -1,7 +1,7 @@
 // The admin console. Built for a computer first: a fixed menu on the left and a wide work area. On tablets and phones the
 // menu becomes a drawer opened from a top bar, and the tables scroll sideways inside their own box.
 import { useEffect, useState, type ComponentType } from "react";
-import { ArrowLeftRight, CreditCard, IdCard, LayoutDashboard, LifeBuoy, LogOut, Menu, Percent, ScrollText, ShieldCheck, UserCog, Users } from "lucide-react";
+import { ArrowLeftRight, CreditCard, IdCard, LayoutDashboard, LifeBuoy, LogOut, Menu, Percent, ScrollText, ShieldCheck, TrendingUp, UserCog, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import type { AdminRole, AdminStatus } from "@/lib/api";
@@ -13,6 +13,7 @@ import { CardsTab } from "@/components/admin/cards";
 import { HoldersTab } from "@/components/admin/holders";
 import { FeesTab } from "@/components/admin/fees";
 import { OverviewTab } from "@/components/admin/overview";
+import { ProfitTab } from "@/components/admin/profit";
 import { Pill } from "@/components/admin/shared";
 import { TeamTab } from "@/components/admin/team";
 import { AuditTab, SupportTab } from "@/components/admin/support";
@@ -22,6 +23,7 @@ import { UsersTab } from "@/components/admin/users";
 const TABS: { id: string; label: string; icon: ComponentType<{ className?: string }> }[] = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "fees", label: "Fees", icon: Percent },
+  { id: "profit", label: "Benefits", icon: TrendingUp },
   { id: "users", label: "Customers", icon: Users },
   { id: "cards", label: "Cards", icon: CreditCard },
   { id: "holders", label: "Card holders", icon: IdCard },
@@ -31,7 +33,7 @@ const TABS: { id: string; label: string; icon: ComponentType<{ className?: strin
   { id: "team", label: "Team", icon: ShieldCheck },
   { id: "account", label: "My account", icon: UserCog },
 ];
-type TabId = "overview" | "fees" | "users" | "cards" | "holders" | "transactions" | "support" | "audit" | "team" | "account";
+type TabId = "overview" | "fees" | "profit" | "users" | "cards" | "holders" | "transactions" | "support" | "audit" | "team" | "account";
 /** The Team page (who can sign in, add an administrator) is for super administrators only. */
 const visibleTabs = (role: AdminRole) => TABS.filter((t) => t.id !== "team" || role === "super");
 
@@ -152,6 +154,7 @@ export function Dashboard({ status, onSignOut }: { status: AdminStatus; onSignOu
         <section aria-label={label}>
           {tab === "overview" && <OverviewTab />}
           {tab === "fees" && <FeesTab role={role} />}
+          {tab === "profit" && <ProfitTab role={role} />}
           {tab === "users" && <UsersTab role={role} />}
           {tab === "cards" && <CardsTab role={role} />}
           {tab === "holders" && <HoldersTab role={role} />}

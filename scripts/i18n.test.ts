@@ -37,9 +37,11 @@ test("the titles written by the database for an adjustment are translated", () =
   for (const en of ["Added by Kasho Pay", "Removed by Kasho Pay", "Adjustment"]) assert.ok(FR[en], en);
 });
 
-test("no profit or margin text is left in the dictionary", () => {
+test("the Benefits tab is translated, and the old estimated-profit wording stays gone", () => {
   const all = [...Object.keys(FR), ...PATTERNS.map(([re]) => re.source)].join("\n");
-  for (const word of ["Net profit", "Profit and loss", "Margin", "Freda's share", "Freda cost", "profit report", "price list"]) assert.ok(!all.includes(word), `dead text still translated: ${word}`);
+  // the Benefits tab shows exact charges and estimates apart: no "margin" or "net profit" figure
+  for (const word of ["Net profit", "Profit and loss", "Margin", "Freda's share", "profit report"]) assert.ok(!all.includes(word), `dead text still translated: ${word}`);
+  for (const en of ["Benefits", "Benefit", "Benefit by operation", "Fees paid by customers", "Charged by Freda (exact)", "Charged by Freda (estimate)", "What Freda charges us (price list)", "Save price"]) assert.ok(FR[en], en);
 });
 
 test("the main screens are translated", () => {

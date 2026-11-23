@@ -184,6 +184,17 @@ export type AdminRate = { rate: number; source: "admin" | "environment"; envRate
 export const adminGetRate = () => call<AdminRate>("adminGetRate", {});
 export const adminSetRate = (a: Arg<{ rate: number; confirmPassword: string }>) => call<AdminRate>("adminSetRate", a.data);
 
+/** What Freda charges us for one operation (the price list the benefit estimates use). */
+export type AdminPartnerRule = { operation: string; label: string; percent: number; flatUsd: number; flatHtg: number; thresholdUsd: number | null; active: boolean; note: string };
+export type AdminProfitRow = { kind: string; label: string; count: number; volume: number; fees: number; costExact: number; costEstimated: number; estimatedCount: number; profit: number };
+export type AdminProfit = {
+  period: { from: string; to: string; days: number }; rate: number; truncated: boolean; rules: AdminPartnerRule[];
+  rows: AdminProfitRow[]; totals: Omit<AdminProfitRow, "kind" | "label">;
+};
+export const adminGetProfit = (a: Arg<{ days: number }>) => call<AdminProfit>("adminGetProfit", a.data);
+export const adminSavePartnerCost = (a: Arg<{ operation: string; percent: number; flatUsd: number; flatHtg: number; thresholdUsd: number | null; active: boolean; note: string; confirmPassword: string }>) =>
+  call<{ rules: AdminPartnerRule[] }>("adminSavePartnerCost", a.data);
+
 /** A customer with a verified KYC and where their card holder is at Freda (new card program). */
 export type AdminHolderRow = {
   userId: string; name: string; holderId: string | null; email: string | null;
