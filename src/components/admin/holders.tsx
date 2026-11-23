@@ -11,7 +11,8 @@ import { Empty, ErrorBox, Loading, Pill, Section, Stat, when, type Tone } from "
 const STATUS: Record<string, { label: string; tone: Tone }> = {
   none: { label: "Never sent", tone: "bad" },
   needs_profile: { label: "Profile incomplete", tone: "warn" },
-  submitted: { label: "Sent, waiting", tone: "warn" },
+  registered: { label: "Registered, ID not sent", tone: "bad" },
+  submitted: { label: "ID sent, waiting", tone: "warn" },
   verified: { label: "Verified", tone: "good" },
   failed: { label: "Refused", tone: "bad" },
 };
@@ -40,17 +41,17 @@ export function HoldersTab({ role }: { role: AdminRole }) {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-        {(["none", "submitted", "verified", "failed", "needs_profile"] as const).map((k) => (
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
+        {(["none", "registered", "submitted", "verified", "failed", "needs_profile"] as const).map((k) => (
           <button key={k} type="button" className="text-left" onClick={() => setFilter(filter === k ? "all" : k)} aria-pressed={filter === k}>
-            <Stat label={STATUS[k]!.label} value={counts[k] ?? 0} tone={k === "verified" ? "good" : k === "failed" || k === "none" ? ((counts[k] ?? 0) > 0 ? "bad" : "plain") : "plain"} className={filter === k ? "ring-2 ring-primary" : ""} />
+            <Stat label={STATUS[k]!.label} value={counts[k] ?? 0} tone={k === "verified" ? "good" : k === "failed" || k === "none" || k === "registered" ? ((counts[k] ?? 0) > 0 ? "bad" : "plain") : "plain"} className={filter === k ? "ring-2 ring-primary" : ""} />
           </button>
         ))}
       </div>
 
       <Section
         title="Card holders (new card program)"
-        description={`Customers with a verified identity (${total}) and where their card holder is at Freda (${mode === "live" ? "Live" : "Sandbox"}). "Verified" comes from Freda's holder.verified message: only then can the customer create a card. A customer shown "Never sent" was not sent to Freda yet.`}
+        description={`Customers with a verified identity (${total}) and where their card holder is at Freda (${mode === "live" ? "Live" : "Sandbox"}). "Verified" comes from Freda's holder.verified message: only then can the customer create a card. "Registered, ID not sent" is "à vérifier" at Freda: its ID photo was not submitted yet (it is sent again automatically). "Never sent" was not sent to Freda at all.`}
         action={<Button variant="outline" size="sm" onClick={() => void query.refetch()}><RefreshCw className="h-3.5 w-3.5" /> Refresh</Button>}
       >
         {shown.length === 0 ? <Empty>Nobody here.</Empty> : (
@@ -74,12 +75,12 @@ export function HoldersTab({ role }: { role: AdminRole }) {
                         <td className="px-3 py-2.5 text-right">
                           {r.status !== "verified" && (
                             <div className="flex flex-wrap justify-end gap-2">
-                              <Button size="sm" disabled={busy !== null} onClick={() => void send(r, "new")}>
-                                {busy === `${r.userId}:new` ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />} Send now
+                              <Button size="sm" disabled={busy !== null} onClick={() => void send(r, r.holderId ? "restart" : "new")}>
+                                {busy === `${r.userId}:new` ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />} {r.holderId ? "Send ID again" : "Send now"}
                               </Button>
                               {r.holderId && (
-                                <Button size="sm" variant="outline" disabled={busy !== null} onClick={() => void send(r, "restart")}>
-                                  {busy === `${r.userId}:restart` && <Loader2 className="h-3.5 w-3.5 animate-spin" />} Restart
+                                <Button size="sm" variant="outline" disabled={busy !== null} onClick={() => void send(r, "new")}>
+                                  {busy === `${r.userId}:new` && <Loader2 className="h-3.5 w-3.5 animate-spin" />} New holder
                                 </Button>
                               )}
                             </div>
@@ -93,7 +94,7 @@ export function HoldersTab({ role }: { role: AdminRole }) {
             </table>
           </div>
         )}
-        {role === "super" && <p className="mt-4 text-xs text-muted-foreground">"Send now" makes a new holder at Freda with a slightly different e-mail. "Restart" starts the verification of the holder the customer already has. Freda allows 5 verifications per customer per 24 hours.</p>}
+        {role === "super" && <p className="mt-4 text-xs text-muted-foreground">"Send ID again" submits the ID photos of the holder the customer already has (this is what Freda needs to verify it). "Send now" and "New holder" make a new holder at Freda with a slightly different e-mail, then submit its ID. Freda allows 5 verifications per customer per 24 hours.</p>}
       </Section>
     </div>
   );

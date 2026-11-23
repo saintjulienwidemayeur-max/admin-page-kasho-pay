@@ -187,7 +187,7 @@ export const adminSetRate = (a: Arg<{ rate: number; confirmPassword: string }>) 
 /** A customer with a verified KYC and where their card holder is at Freda (new card program). */
 export type AdminHolderRow = {
   userId: string; name: string; holderId: string | null; email: string | null;
-  status: "none" | "needs_profile" | "submitted" | "verified" | "failed"; reason: string | null;
+  status: "none" | "needs_profile" | "registered" | "submitted" | "verified" | "failed"; reason: string | null;
   sentAt: string | null; lastAttemptAt: string | null; checkedAt: string | null;
 };
 export const adminListHolders = () => call<{ mode: string; total: number; counts: Record<string, number>; items: AdminHolderRow[] }>("adminListHolders", {});

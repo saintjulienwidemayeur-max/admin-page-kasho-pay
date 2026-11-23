@@ -7,8 +7,8 @@ export const FR: Record<string, string> = {
   "Card holders": "Titulaires de cartes", "Card holders (new card program)": "Titulaires de cartes (nouveau programme)",
   "Never sent": "Jamais envoyé", "Profile incomplete": "Profil incomplet", "Sent, waiting": "Envoyé, en attente", "Refused": "Refusé",
   "Freda holder": "Titulaire Freda", "Sent": "Envoyé", "Last try": "Dernier essai", "Nobody here.": "Personne ici.",
-  "Send now": "Envoyer maintenant", "Restart": "Relancer",
-  "\"Send now\" makes a new holder at Freda with a slightly different e-mail. \"Restart\" starts the verification of the holder the customer already has. Freda allows 5 verifications per customer per 24 hours.": "« Envoyer maintenant » crée un nouveau titulaire chez Freda avec un e-mail légèrement différent. « Relancer » redémarre la vérification du titulaire que le client a déjà. Freda autorise 5 vérifications par client par 24 heures.",
+  "Send now": "Envoyer maintenant", "Send ID again": "Renvoyer la pièce", "New holder": "Nouveau titulaire", "Registered, ID not sent": "Enregistré, pièce non envoyée", "ID sent, waiting": "Pièce envoyée, en attente",
+  "\"Send ID again\" submits the ID photos of the holder the customer already has (this is what Freda needs to verify it). \"Send now\" and \"New holder\" make a new holder at Freda with a slightly different e-mail, then submit its ID. Freda allows 5 verifications per customer per 24 hours.": "« Renvoyer la pièce » soumet les photos de la pièce d'identité du titulaire que le client a déjà (c'est ce dont Freda a besoin pour le vérifier). « Envoyer maintenant » et « Nouveau titulaire » créent un nouveau titulaire chez Freda avec un e-mail légèrement différent, puis soumettent sa pièce. Freda autorise 5 vérifications par client par 24 heures.",
   "Freda did not accept it.": "Freda ne l'a pas accepté.",
   // support replies
   "Reply": "Répondre", "Reply again": "Répondre à nouveau", "Your reply": "Votre réponse", "Send reply": "Envoyer la réponse", "Reply sent": "Réponse envoyée", "the customer": "le client",
@@ -250,7 +250,7 @@ export const MONTHS_FR: Record<string, string> = {
 
 export const PATTERNS: [RegExp, string][] = [
   [/^Sent to Freda: (.*)$/, "Envoyé à Freda : $1"],
-  [/^Customers with a verified identity \((\d+)\) and where their card holder is at Freda \((Live|Sandbox)\)\. "Verified" comes from Freda's holder\.verified message: only then can the customer create a card\. A customer shown "Never sent" was not sent to Freda yet\.$/, "Clients dont l'identité est vérifiée ($1) et où en est leur titulaire chez Freda ($2). « Vérifié » vient du message holder.verified de Freda : le client ne peut créer une carte qu'à ce moment. Un client « Jamais envoyé » n'a pas encore été envoyé à Freda."],
+  [/^Customers with a verified identity \((\d+)\) and where their card holder is at Freda \((Live|Sandbox)\)\. "Verified" comes from Freda's holder\.verified message: only then can the customer create a card\. "Registered, ID not sent" is "à vérifier" at Freda: its ID photo was not submitted yet \(it is sent again automatically\)\. "Never sent" was not sent to Freda at all\.$/, "Clients dont l'identité est vérifiée ($1) et où en est leur titulaire chez Freda ($2). « Vérifié » vient du message holder.verified de Freda : le client ne peut créer une carte qu'à ce moment. « Enregistré, pièce non envoyée » = « à vérifier » chez Freda : la photo de sa pièce n'a pas encore été soumise (elle est renvoyée automatiquement). « Jamais envoyé » n'a pas été envoyé à Freda."],
   [/^Reply to (.+)$/, "Répondre à $1"],
   [/^Your reply · (.+)$/, "Votre réponse · $1"],
   [/^(\d+) \/ 2000$/, "$1 / 2000"],
