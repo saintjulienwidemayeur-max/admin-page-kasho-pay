@@ -191,8 +191,12 @@ export type AdminHolderRow = {
   sentAt: string | null; lastAttemptAt: string | null; checkedAt: string | null;
 };
 export const adminListHolders = () => call<{ mode: string; total: number; counts: Record<string, number>; items: AdminHolderRow[] }>("adminListHolders", {});
-/** Marks a customer's holder as verified (Freda's dashboard says "Accepté" but the webhook did not arrive). */
-export const adminMarkHolderVerified = (a: Arg<{ userId: string }>) => call<{ ok: true; holderId: string | null }>("adminMarkHolderVerified", a.data);
+/** Is Freda's webhook reaching the backend? (Freda sends a signed test event; `refresh` runs a new check.) */
+export type AdminWebhookCheck = {
+  checkedAt: string; mode: "live" | "sandbox" | null; url: string | null; active: boolean | null; expectedUrl: string | null;
+  test: { sent: boolean; httpStatus: number | null; reason: string | null } | null; ok: boolean; problem: string | null;
+} | null;
+export const adminWebhookStatus = (a: { refresh?: boolean } = {}) => call<AdminWebhookCheck>("adminWebhookStatus", a);
 export const adminSendHolder = (a: Arg<{ userId: string; how: "new" | "restart" }>) =>
   call<{ state: string; reason: string | null; holderId: string | null }>("adminSendHolder", a.data);
 

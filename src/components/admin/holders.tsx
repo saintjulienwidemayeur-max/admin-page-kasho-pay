@@ -4,8 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, RefreshCw, Send } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { adminListHolders, adminMarkHolderVerified, adminSendHolder, type AdminHolderRow, type AdminRole } from "@/lib/api";
+import { adminListHolders, adminSendHolder, adminWebhookStatus, type AdminHolderRow, type AdminRole } from "@/lib/api";
 import { errorMessage } from "@/lib/format";
 import { Empty, ErrorBox, Loading, Pill, Section, Stat, when, type Tone } from "./shared";
 
@@ -23,7 +22,6 @@ export function HoldersTab({ role }: { role: AdminRole }) {
   const query = useQuery({ queryKey: ["admin", "holders"], queryFn: adminListHolders, refetchInterval: 30_000 });
   const [busy, setBusy] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>("all");
-  const [marking, setMarking] = useState<AdminHolderRow | null>(null);
   if (query.isPending) return <Loading />;
   if (query.isError) return <ErrorBox error={query.error} onRetry={() => void query.refetch()} />;
   const { counts, items, mode, total } = query.data;
@@ -41,20 +39,9 @@ export function HoldersTab({ role }: { role: AdminRole }) {
     } finally { setBusy(null); }
   };
 
-  const mark = async (row: AdminHolderRow) => {
-    setMarking(null);
-    setBusy(`${row.userId}:mark`);
-    try {
-      await adminMarkHolderVerified({ data: { userId: row.userId } });
-      toast.success("Marked as verified: the customer can create a card");
-      void qc.invalidateQueries({ queryKey: ["admin", "holders"] });
-    } catch (e) {
-      toast.error(errorMessage(e));
-    } finally { setBusy(null); }
-  };
-
   return (
     <div className="space-y-6">
+      <WebhookBanner />
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
         {(["none", "registered", "submitted", "verified", "failed", "needs_profile"] as const).map((k) => (
           <button key={k} type="button" className="text-left" onClick={() => setFilter(filter === k ? "all" : k)} aria-pressed={filter === k}>
@@ -93,11 +80,6 @@ export function HoldersTab({ role }: { role: AdminRole }) {
                                 {busy === `${r.userId}:new` ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />} {r.holderId ? "Send ID again" : "Send now"}
                               </Button>
                               {r.holderId && (
-                                <Button size="sm" variant="outline" disabled={busy !== null} onClick={() => setMarking(r)}>
-                                  {busy === `${r.userId}:mark` && <Loader2 className="h-3.5 w-3.5 animate-spin" />} Mark verified
-                                </Button>
-                              )}
-                              {r.holderId && (
                                 <Button size="sm" variant="outline" disabled={busy !== null} onClick={() => void send(r, "new")}>
                                   {busy === `${r.userId}:new` && <Loader2 className="h-3.5 w-3.5 animate-spin" />} New holder
                                 </Button>
@@ -113,25 +95,35 @@ export function HoldersTab({ role }: { role: AdminRole }) {
             </table>
           </div>
         )}
-        {marking && (
-          <AlertDialog open onOpenChange={(o) => { if (!o) setMarking(null); }}>
-            <AlertDialogContent className="rounded-2xl">
-              <AlertDialogHeader>
-                <AlertDialogTitle>{`Mark ${marking.name} as verified?`}</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Do this only if Freda's dashboard shows this holder as "Accepté" in the new program. The customer will be told and can create a card right away. If the holder is not accepted, the card is made the old way, without Apple Pay and Google Pay.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <p data-no-i18n className="rounded-xl border border-border bg-secondary/40 px-3 py-2 font-mono text-xs">{marking.holderId}</p>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={() => void mark(marking)}>Mark verified</AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        )}
         {role === "super" && <p className="mt-4 text-xs text-muted-foreground">"Send ID again" submits the ID photos of the holder the customer already has (this is what Freda needs to verify it). "Send now" and "New holder" make a new holder at Freda with a slightly different e-mail, then submit its ID. Freda allows 5 verifications per customer per 24 hours.</p>}
       </Section>
+    </div>
+  );
+}
+
+/** Does Freda's message "holder verified" reach the backend? Checked automatically by the backend (Freda sends it a signed test event). */
+function WebhookBanner() {
+  const q = useQuery({ queryKey: ["admin", "webhook"], queryFn: () => adminWebhookStatus(), refetchInterval: 5 * 60_000, retry: false });
+  const [busy, setBusy] = useState(false);
+  const qc = useQueryClient();
+  if (q.isPending || q.isError || !q.data) return null;
+  const c = q.data;
+  const recheck = async () => {
+    setBusy(true);
+    try { qc.setQueryData(["admin", "webhook"], await adminWebhookStatus({ refresh: true })); } catch (e) { toast.error(errorMessage(e)); } finally { setBusy(false); }
+  };
+  return (
+    <div role="status" className={`flex flex-wrap items-start justify-between gap-3 rounded-2xl border p-4 text-sm ${c.ok ? "border-border bg-card" : "border-destructive/40 bg-destructive/10"}`}>
+      <div className="min-w-0">
+        <p className="font-medium">{c.ok ? "Freda's webhook reaches the server" : "Freda's webhook does NOT reach the server"}</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          {c.ok ? "Freda's \"holder verified\" message is received and the customers are updated automatically." : c.problem}
+        </p>
+        <p data-no-i18n className="mt-1 break-all text-xs text-muted-foreground">{c.url ?? "-"} · {when(c.checkedAt)}</p>
+      </div>
+      <Button variant="outline" size="sm" disabled={busy} onClick={() => void recheck()}>
+        {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />} Test now
+      </Button>
     </div>
   );
 }

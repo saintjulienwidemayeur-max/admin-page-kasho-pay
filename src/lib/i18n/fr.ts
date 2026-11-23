@@ -7,8 +7,8 @@ export const FR: Record<string, string> = {
   "Card holders": "Titulaires de cartes", "Card holders (new card program)": "Titulaires de cartes (nouveau programme)",
   "Never sent": "Jamais envoyé", "Profile incomplete": "Profil incomplet", "Sent, waiting": "Envoyé, en attente", "Refused": "Refusé",
   "Freda holder": "Titulaire Freda", "Sent": "Envoyé", "Last try": "Dernier essai", "Nobody here.": "Personne ici.",
-  "Mark verified": "Marquer vérifié", "Marked as verified: the customer can create a card": "Marqué comme vérifié : le client peut créer une carte",
-  "Do this only if Freda's dashboard shows this holder as \"Accepté\" in the new program. The customer will be told and can create a card right away. If the holder is not accepted, the card is made the old way, without Apple Pay and Google Pay.": "À faire seulement si le tableau de bord de Freda montre ce titulaire « Accepté » dans le nouveau programme. Le client sera prévenu et pourra créer une carte tout de suite. Si le titulaire n'est pas accepté, la carte est faite à l'ancienne, sans Apple Pay ni Google Pay.",
+  "Freda's webhook reaches the server": "Le webhook de Freda arrive au serveur", "Freda's webhook does NOT reach the server": "Le webhook de Freda n'arrive PAS au serveur", "Test now": "Tester maintenant",
+  "Freda's \"holder verified\" message is received and the customers are updated automatically.": "Le message « titulaire vérifié » de Freda est reçu et les clients sont mis à jour automatiquement.",
   "Send now": "Envoyer maintenant", "Send ID again": "Renvoyer la pièce", "New holder": "Nouveau titulaire", "Registered, ID not sent": "Enregistré, pièce non envoyée", "ID sent, waiting": "Pièce envoyée, en attente",
   "\"Send ID again\" submits the ID photos of the holder the customer already has (this is what Freda needs to verify it). \"Send now\" and \"New holder\" make a new holder at Freda with a slightly different e-mail, then submit its ID. Freda allows 5 verifications per customer per 24 hours.": "« Renvoyer la pièce » soumet les photos de la pièce d'identité du titulaire que le client a déjà (c'est ce dont Freda a besoin pour le vérifier). « Envoyer maintenant » et « Nouveau titulaire » créent un nouveau titulaire chez Freda avec un e-mail légèrement différent, puis soumettent sa pièce. Freda autorise 5 vérifications par client par 24 heures.",
   "Freda did not accept it.": "Freda ne l'a pas accepté.",
@@ -251,7 +251,6 @@ export const MONTHS_FR: Record<string, string> = {
 };
 
 export const PATTERNS: [RegExp, string][] = [
-  [/^Mark (.+) as verified\?$/, "Marquer $1 comme vérifié ?"],
   [/^Sent to Freda: (.*)$/, "Envoyé à Freda : $1"],
   [/^Customers with a verified identity \((\d+)\) and where their card holder is at Freda \((Live|Sandbox)\)\. "Verified" comes from Freda's holder\.verified message: only then can the customer create a card\. "Registered, ID not sent" is "à vérifier" at Freda: its ID photo was not submitted yet \(it is sent again automatically\)\. "Never sent" was not sent to Freda at all\.$/, "Clients dont l'identité est vérifiée ($1) et où en est leur titulaire chez Freda ($2). « Vérifié » vient du message holder.verified de Freda : le client ne peut créer une carte qu'à ce moment. « Enregistré, pièce non envoyée » = « à vérifier » chez Freda : la photo de sa pièce n'a pas encore été soumise (elle est renvoyée automatiquement). « Jamais envoyé » n'a pas été envoyé à Freda."],
   [/^Reply to (.+)$/, "Répondre à $1"],
