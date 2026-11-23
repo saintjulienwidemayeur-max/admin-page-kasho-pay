@@ -196,6 +196,8 @@ export type AdminWebhookCheck = {
   checkedAt: string; mode: "live" | "sandbox" | null; url: string | null; active: boolean | null; expectedUrl: string | null;
   test: { sent: boolean; httpStatus: number | null; reason: string | null } | null; ok: boolean; problem: string | null;
 } | null;
+/** Points Freda's webhook at the backend (the password is asked again): registers the URL, keeps the new secret, tests it and submits again the holders that wait. */
+export const adminFixWebhook = (a: { data: { confirmPassword: string } }) => call<{ check: NonNullable<AdminWebhookCheck>; resubmitted: number }>("adminFixWebhook", a.data);
 export const adminWebhookStatus = (a: { refresh?: boolean } = {}) => call<AdminWebhookCheck>("adminWebhookStatus", a);
 export const adminSendHolder = (a: Arg<{ userId: string; how: "new" | "restart" }>) =>
   call<{ state: string; reason: string | null; holderId: string | null }>("adminSendHolder", a.data);

@@ -4,9 +4,10 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, RefreshCw, Send } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { adminListHolders, adminSendHolder, adminWebhookStatus, type AdminHolderRow, type AdminRole } from "@/lib/api";
+import { adminFixWebhook, adminListHolders, adminSendHolder, adminWebhookStatus, type AdminHolderRow, type AdminRole } from "@/lib/api";
 import { errorMessage } from "@/lib/format";
-import { Empty, ErrorBox, Loading, Pill, Section, Stat, when, type Tone } from "./shared";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Empty, ErrorBox, Loading, PasswordConfirm, Pill, Section, Stat, passwordError, when, type Tone } from "./shared";
 
 const STATUS: Record<string, { label: string; tone: Tone }> = {
   none: { label: "Never sent", tone: "bad" },
@@ -41,7 +42,7 @@ export function HoldersTab({ role }: { role: AdminRole }) {
 
   return (
     <div className="space-y-6">
-      <WebhookBanner />
+      <WebhookBanner role={role} />
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
         {(["none", "registered", "submitted", "verified", "failed", "needs_profile"] as const).map((k) => (
           <button key={k} type="button" className="text-left" onClick={() => setFilter(filter === k ? "all" : k)} aria-pressed={filter === k}>
@@ -102,9 +103,10 @@ export function HoldersTab({ role }: { role: AdminRole }) {
 }
 
 /** Does Freda's message "holder verified" reach the backend? Checked automatically by the backend (Freda sends it a signed test event). */
-function WebhookBanner() {
+function WebhookBanner({ role }: { role: AdminRole }) {
   const q = useQuery({ queryKey: ["admin", "webhook"], queryFn: () => adminWebhookStatus(), refetchInterval: 5 * 60_000, retry: false });
   const [busy, setBusy] = useState(false);
+  const [fixing, setFixing] = useState(false);
   const qc = useQueryClient();
   if (q.isPending || q.isError || !q.data) return null;
   const c = q.data;
@@ -121,9 +123,55 @@ function WebhookBanner() {
         </p>
         <p data-no-i18n className="mt-1 break-all text-xs text-muted-foreground">{c.url ?? "-"} · {when(c.checkedAt)}</p>
       </div>
-      <Button variant="outline" size="sm" disabled={busy} onClick={() => void recheck()}>
-        {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />} Test now
-      </Button>
+      <div className="flex flex-wrap gap-2">
+        {!c.ok && role === "super" && <Button size="sm" onClick={() => setFixing(true)}>Fix automatically</Button>}
+        <Button variant="outline" size="sm" disabled={busy} onClick={() => void recheck()}>
+          {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />} Test now
+        </Button>
+      </div>
+      {fixing && <FixWebhookDialog check={c} onClose={() => setFixing(false)} />}
     </div>
+  );
+}
+
+function FixWebhookDialog({ check, onClose }: { check: NonNullable<import("@/lib/api").AdminWebhookCheck>; onClose: () => void }) {
+  const qc = useQueryClient();
+  const [password, setPassword] = useState("");
+  const [pwError, setPwError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const run = async () => {
+    setBusy(true);
+    setPwError("");
+    try {
+      const r = await adminFixWebhook({ data: { confirmPassword: password } });
+      if (r.check.ok) toast.success(`Webhook fixed. ${r.resubmitted} holder(s) will be submitted again.`);
+      else toast.error(r.check.problem ?? "The test still fails.");
+      qc.setQueryData(["admin", "webhook"], r.check);
+      void qc.invalidateQueries({ queryKey: ["admin", "holders"] });
+      onClose();
+    } catch (e) {
+      const bad = passwordError(e);
+      if (bad) { setPassword(""); setPwError(bad); } else toast.error(errorMessage(e));
+    } finally { setBusy(false); }
+  };
+  return (
+    <Dialog open onOpenChange={(o) => { if (!o && !busy) onClose(); }}>
+      <DialogContent className="rounded-2xl">
+        <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); if (password && !busy) void run(); }}>
+          <DialogHeader>
+            <DialogTitle>Point Freda's webhook at this server</DialogTitle>
+            <DialogDescription>
+              Freda will send its messages (payments, cards, card holders) to this server instead. The new secret is kept by the server: nothing to copy. Then Freda sends a test, and the card holders that wait are submitted again so their decision comes to the right address.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-1 rounded-xl border border-border bg-secondary/40 p-3 text-xs">
+            <p><span className="text-muted-foreground">Now: </span><span data-no-i18n className="break-all font-mono">{check.url ?? "-"}</span></p>
+            <p><span className="text-muted-foreground">New: </span><span data-no-i18n className="break-all font-mono">{check.expectedUrl ?? "-"}</span></p>
+          </div>
+          <PasswordConfirm value={password} onChange={(p) => { setPassword(p); setPwError(""); }} error={pwError} busy={busy} />
+          <DialogFooter><Button type="submit" className="w-full rounded-xl" disabled={!password || busy || !check.expectedUrl}>{busy && <Loader2 className="h-4 w-4 animate-spin" />} Fix</Button></DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -9,6 +9,9 @@ export const FR: Record<string, string> = {
   "Freda holder": "Titulaire Freda", "Sent": "Envoyé", "Last try": "Dernier essai", "Nobody here.": "Personne ici.",
   "Freda's webhook reaches the server": "Le webhook de Freda arrive au serveur", "Freda's webhook does NOT reach the server": "Le webhook de Freda n'arrive PAS au serveur", "Test now": "Tester maintenant",
   "Freda's \"holder verified\" message is received and the customers are updated automatically.": "Le message « titulaire vérifié » de Freda est reçu et les clients sont mis à jour automatiquement.",
+  "Fix automatically": "Corriger automatiquement", "Fix": "Corriger", "Point Freda's webhook at this server": "Faire pointer le webhook de Freda vers ce serveur",
+  "Freda will send its messages (payments, cards, card holders) to this server instead. The new secret is kept by the server: nothing to copy. Then Freda sends a test, and the card holders that wait are submitted again so their decision comes to the right address.": "Freda enverra ses messages (paiements, cartes, titulaires) à ce serveur à la place. Le nouveau secret est gardé par le serveur : rien à copier. Ensuite Freda envoie un test, et les titulaires en attente sont soumis à nouveau pour que leur décision arrive à la bonne adresse.",
+  "Now:": "Actuel :", "New:": "Nouveau :",
   "Send now": "Envoyer maintenant", "Send ID again": "Renvoyer la pièce", "New holder": "Nouveau titulaire", "Registered, ID not sent": "Enregistré, pièce non envoyée", "ID sent, waiting": "Pièce envoyée, en attente",
   "\"Send ID again\" submits the ID photos of the holder the customer already has (this is what Freda needs to verify it). \"Send now\" and \"New holder\" make a new holder at Freda with a slightly different e-mail, then submit its ID. Freda allows 5 verifications per customer per 24 hours.": "« Renvoyer la pièce » soumet les photos de la pièce d'identité du titulaire que le client a déjà (c'est ce dont Freda a besoin pour le vérifier). « Envoyer maintenant » et « Nouveau titulaire » créent un nouveau titulaire chez Freda avec un e-mail légèrement différent, puis soumettent sa pièce. Freda autorise 5 vérifications par client par 24 heures.",
   "Freda did not accept it.": "Freda ne l'a pas accepté.",
@@ -251,6 +254,8 @@ export const MONTHS_FR: Record<string, string> = {
 };
 
 export const PATTERNS: [RegExp, string][] = [
+  [/^Webhook fixed\. (\d+) holder\(s\) will be submitted again\.$/, "Webhook corrigé. $1 titulaire(s) seront soumis à nouveau."],
+  [/^Freda sends to (\S+) but this server is (\S+)\.$/, "Freda envoie à $1 mais ce serveur est $2."],
   [/^Sent to Freda: (.*)$/, "Envoyé à Freda : $1"],
   [/^Customers with a verified identity \((\d+)\) and where their card holder is at Freda \((Live|Sandbox)\)\. "Verified" comes from Freda's holder\.verified message: only then can the customer create a card\. "Registered, ID not sent" is "à vérifier" at Freda: its ID photo was not submitted yet \(it is sent again automatically\)\. "Never sent" was not sent to Freda at all\.$/, "Clients dont l'identité est vérifiée ($1) et où en est leur titulaire chez Freda ($2). « Vérifié » vient du message holder.verified de Freda : le client ne peut créer une carte qu'à ce moment. « Enregistré, pièce non envoyée » = « à vérifier » chez Freda : la photo de sa pièce n'a pas encore été soumise (elle est renvoyée automatiquement). « Jamais envoyé » n'a pas été envoyé à Freda."],
   [/^Reply to (.+)$/, "Répondre à $1"],
