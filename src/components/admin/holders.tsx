@@ -4,7 +4,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, RefreshCw, Send } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { adminListHolders, adminSendHolder, type AdminHolderRow, type AdminRole } from "@/lib/api";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { adminListHolders, adminMarkHolderVerified, adminSendHolder, type AdminHolderRow, type AdminRole } from "@/lib/api";
 import { errorMessage } from "@/lib/format";
 import { Empty, ErrorBox, Loading, Pill, Section, Stat, when, type Tone } from "./shared";
 
@@ -22,6 +23,7 @@ export function HoldersTab({ role }: { role: AdminRole }) {
   const query = useQuery({ queryKey: ["admin", "holders"], queryFn: adminListHolders, refetchInterval: 30_000 });
   const [busy, setBusy] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>("all");
+  const [marking, setMarking] = useState<AdminHolderRow | null>(null);
   if (query.isPending) return <Loading />;
   if (query.isError) return <ErrorBox error={query.error} onRetry={() => void query.refetch()} />;
   const { counts, items, mode, total } = query.data;
@@ -33,6 +35,18 @@ export function HoldersTab({ role }: { role: AdminRole }) {
       const r = await adminSendHolder({ data: { userId: row.userId, how } });
       if (r.state === "failed" || r.state === "needs_profile") toast.error(r.reason ?? "Freda did not accept it.");
       else toast.success(`Sent to Freda: ${r.holderId ?? ""}`);
+      void qc.invalidateQueries({ queryKey: ["admin", "holders"] });
+    } catch (e) {
+      toast.error(errorMessage(e));
+    } finally { setBusy(null); }
+  };
+
+  const mark = async (row: AdminHolderRow) => {
+    setMarking(null);
+    setBusy(`${row.userId}:mark`);
+    try {
+      await adminMarkHolderVerified({ data: { userId: row.userId } });
+      toast.success("Marked as verified: the customer can create a card");
       void qc.invalidateQueries({ queryKey: ["admin", "holders"] });
     } catch (e) {
       toast.error(errorMessage(e));
@@ -79,6 +93,11 @@ export function HoldersTab({ role }: { role: AdminRole }) {
                                 {busy === `${r.userId}:new` ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />} {r.holderId ? "Send ID again" : "Send now"}
                               </Button>
                               {r.holderId && (
+                                <Button size="sm" variant="outline" disabled={busy !== null} onClick={() => setMarking(r)}>
+                                  {busy === `${r.userId}:mark` && <Loader2 className="h-3.5 w-3.5 animate-spin" />} Mark verified
+                                </Button>
+                              )}
+                              {r.holderId && (
                                 <Button size="sm" variant="outline" disabled={busy !== null} onClick={() => void send(r, "new")}>
                                   {busy === `${r.userId}:new` && <Loader2 className="h-3.5 w-3.5 animate-spin" />} New holder
                                 </Button>
@@ -93,6 +112,23 @@ export function HoldersTab({ role }: { role: AdminRole }) {
               </tbody>
             </table>
           </div>
+        )}
+        {marking && (
+          <AlertDialog open onOpenChange={(o) => { if (!o) setMarking(null); }}>
+            <AlertDialogContent className="rounded-2xl">
+              <AlertDialogHeader>
+                <AlertDialogTitle>{`Mark ${marking.name} as verified?`}</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Do this only if Freda's dashboard shows this holder as "Accepté" in the new program. The customer will be told and can create a card right away. If the holder is not accepted, the card is made the old way, without Apple Pay and Google Pay.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <p data-no-i18n className="rounded-xl border border-border bg-secondary/40 px-3 py-2 font-mono text-xs">{marking.holderId}</p>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={() => void mark(marking)}>Mark verified</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         )}
         {role === "super" && <p className="mt-4 text-xs text-muted-foreground">"Send ID again" submits the ID photos of the holder the customer already has (this is what Freda needs to verify it). "Send now" and "New holder" make a new holder at Freda with a slightly different e-mail, then submit its ID. Freda allows 5 verifications per customer per 24 hours.</p>}
       </Section>

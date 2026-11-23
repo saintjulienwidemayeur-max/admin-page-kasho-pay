@@ -191,6 +191,8 @@ export type AdminHolderRow = {
   sentAt: string | null; lastAttemptAt: string | null; checkedAt: string | null;
 };
 export const adminListHolders = () => call<{ mode: string; total: number; counts: Record<string, number>; items: AdminHolderRow[] }>("adminListHolders", {});
+/** Marks a customer's holder as verified (Freda's dashboard says "Accepté" but the webhook did not arrive). */
+export const adminMarkHolderVerified = (a: Arg<{ userId: string }>) => call<{ ok: true; holderId: string | null }>("adminMarkHolderVerified", a.data);
 export const adminSendHolder = (a: Arg<{ userId: string; how: "new" | "restart" }>) =>
   call<{ state: string; reason: string | null; holderId: string | null }>("adminSendHolder", a.data);
 
